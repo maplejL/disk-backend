@@ -1,0 +1,17 @@
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+        username: maple
+        password: root
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://106.14.166.169:3306/disk?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
+    jpa:
+        hibernate:
+            ddl-auto: create
+        show-sql: true
+server:
+    port: 8080
+servlet:
+    multipart:
+        max-file-size: 100MB
+        max-request-size: 100MB
