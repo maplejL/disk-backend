@@ -7,11 +7,12 @@ spring:
         url: jdbc:mysql://106.14.166.169:3306/disk?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
     jpa:
         hibernate:
-            ddl-auto: create
+            ddl-auto: update
         show-sql: true
+    servlet:
+        multipart:
+            max-file-size: 100MB
+            max-request-size: 100MB
 server:
-    port: 8080
-servlet:
-    multipart:
-        max-file-size: 100MB
-        max-request-size: 100MB
+    port: 9999
+

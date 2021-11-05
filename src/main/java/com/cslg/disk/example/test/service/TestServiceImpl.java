@@ -1,11 +1,10 @@
 package com.cslg.disk.example.test.service;
 
 import com.cslg.disk.example.test.dao.TestDao;
-import com.cslg.disk.example.test.entity.Test;
+import com.cslg.disk.utils.TencentCOSUtil;
+import com.qcloud.cos.model.ObjectListing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class TestServiceImpl implements TestService {
@@ -13,7 +12,8 @@ public class TestServiceImpl implements TestService {
     private TestDao testDao;
 
     @Override
-    public List<Test> get() {
-        return testDao.findAll();
+    public ObjectListing get() {
+        TencentCOSUtil tencentCOSUtil = new TencentCOSUtil();
+        return tencentCOSUtil.listObjects("disk-1305749742");
     }
 }

@@ -1,6 +1,7 @@
 package com.cslg.disk.example.test.entity;
 
 
+import com.cslg.disk.common.BaseEntity;
 import lombok.Data;
 
 import javax.persistence.Entity;
@@ -10,10 +11,7 @@ import javax.persistence.Id;
 
 @Entity
 @Data
-public class Test {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+public class Test extends BaseEntity {
 
     private String name;
 }

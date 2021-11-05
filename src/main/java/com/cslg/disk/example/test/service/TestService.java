@@ -1,9 +1,7 @@
 package com.cslg.disk.example.test.service;
 
-import com.cslg.disk.example.test.entity.Test;
-
-import java.util.List;
+import com.qcloud.cos.model.ObjectListing;
 
 public interface TestService {
-    public List<Test> get();
+    public ObjectListing get();
 }
