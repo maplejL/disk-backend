@@ -1,10 +1,12 @@
 package com.cslg.disk.example.file.util;
 
 import com.cslg.disk.common.GlobalExceptionHandler;
+
 import com.cslg.disk.utils.TencentCOSUtil;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.Java2DFrameConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -14,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class ImageUtil {
+
     /**
      * 生成截图
      * @param filePath 视频文件本地路径

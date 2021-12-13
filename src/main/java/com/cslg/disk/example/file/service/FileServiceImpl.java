@@ -1,6 +1,7 @@
 package com.cslg.disk.example.file.service;
 
 import com.cslg.disk.example.file.dao.ThumbnailDao;
+import com.cslg.disk.example.file.dto.SearchPageDto;
 import com.cslg.disk.example.file.entity.File;
 import com.cslg.disk.example.file.entity.Thumbnail;
 import com.cslg.disk.example.file.util.FileUtil;
@@ -13,9 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
-public class FileServiceImpl implements FileService {
+public class FileServiceImpl implements FileService  {
     @Autowired
     private FileDao fileDao;
 
@@ -25,13 +27,18 @@ public class FileServiceImpl implements FileService {
     FileUtil fileUtil = new FileUtil();
 
     @Override
-    public Iterable<File> getFile(int pageSize, int typeCode) {
+    public Iterable<File> getFile(SearchPageDto searchPageDto) {
+        int pageSize = searchPageDto.getPageSize();
+        int typeCode = searchPageDto.getTypeCode();
+        int pageNo = searchPageDto.getPageNo();
 
-        Iterable<File> fileList = fileDao.findByPage(pageSize, typeCode);
+        int start = pageNo * pageSize;
+        int end = start + pageSize;
+        Iterable<File> fileList = fileDao.findByPage(start, end, typeCode);
         if (typeCode == 1) {
             fileList.forEach(item -> {
-                String thumbnailUrl = thumbnailDao.findByVideoUrl(item.getUrl());
-                item.setThumbnailUrl(thumbnailUrl);
+                String thumbnailName = thumbnailDao.findByVideoUrl(item.getUrl());
+                item.setThumbnailName("http://localhost:9999/" + thumbnailName + ".jpg");
             });
         }
         return fileList;
@@ -55,14 +62,18 @@ public class FileServiceImpl implements FileService {
         uploadFile.setSize(fileSize);
         uploadFile.setUrl(uploadFilePath);
         uploadFile.setTypeCode(typeCode);
+        String contentType = file.getContentType();
+        String[] split = contentType.split("/");
+        uploadFile.setTypeName(split[1]);
 
         if (typeCode == 1) {
             ImageUtil imageUtil = new ImageUtil();
             try {
-                imageUtil.randomGrabberFFmpegImage(uploadFilePath, targetFilePath, file.getOriginalFilename());
+                String thumbnailName = UUID.randomUUID().toString();
+                String path = imageUtil.randomGrabberFFmpegImage(uploadFilePath, targetFilePath, thumbnailName);
                 Thumbnail thumbnail = new Thumbnail();
-                thumbnail.setName(file.getOriginalFilename());
-                thumbnail.setUrl(targetFilePath);
+                thumbnail.setName(thumbnailName);
+                thumbnail.setUrl(path);
                 thumbnail.setVideoUrl(uploadFilePath);
                 thumbnailDao.save(thumbnail);
             } catch (Exception e) {

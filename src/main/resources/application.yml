@@ -13,11 +13,11 @@ spring:
         multipart:
             max-file-size: 100MB
             max-request-size: 100MB
-    mvc:
-        async:
-            request-timeout=100s:
+    resources:
+        static-locations : file:C:\\Users\\user\\Videos\\Captures
 server:
     port: 9999
-
+logging:
+    level: info
 
 

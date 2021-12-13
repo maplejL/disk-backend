@@ -18,7 +18,7 @@ public class FileController {
     //分页获取文件
     @PostMapping("/getPage")
     public Iterable<File> getFile(@RequestBody SearchPageDto searchPageDto) {
-        return fileService.getFile(searchPageDto.getPageSize(), searchPageDto.getTypeCode());
+        return fileService.getFile(searchPageDto);
     }
 
     //获取全部文件

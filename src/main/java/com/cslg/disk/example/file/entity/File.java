@@ -16,5 +16,7 @@ public class File extends BaseEntity {
 
     private int typeCode;
 
-    private String thumbnailUrl;
+    private String thumbnailName;
+
+    private String typeName;
 }
