@@ -21,6 +21,13 @@ public class ResponseMessage<T> {
         this.data = data;
     }
 
+    public static ResponseMessage isNul(Object data) {
+        if (data != null) {
+            return new ResponseMessage(CODE_SUCCESS, MSG_SUCCESS,data);
+        }
+        return new ResponseMessage(CODE_FAIL, MSG_FAIL);
+    }
+
     public ResponseMessage(int status, String message) {
         this.status = status;
         this.message = message;
