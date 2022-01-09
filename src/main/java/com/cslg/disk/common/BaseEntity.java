@@ -1,5 +1,6 @@
 package com.cslg.disk.common;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Data;
@@ -28,16 +29,19 @@ public abstract class BaseEntity {
     // additional field
     @CreatedDate
     private Date createdDate;
+
     @CreatedBy
     private String createdBy;
+
     @LastModifiedDate
     private Date modifiedDate;
+
     @LastModifiedBy
     private String modifiedBy;
 
-    @JsonIgnore
-    @Column(name = "is_active")
-    private boolean isActive = true;
+//    @JsonIgnore
+//    @Column(name = "is_active")
+//    private boolean isActive = true;
 
     @JsonIgnore
     private int isDelete = 0;
