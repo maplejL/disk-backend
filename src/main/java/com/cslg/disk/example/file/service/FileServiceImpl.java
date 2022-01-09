@@ -6,15 +6,13 @@ import com.cslg.disk.example.file.entity.File;
 import com.cslg.disk.example.file.entity.Thumbnail;
 import com.cslg.disk.example.file.util.FileUtil;
 import com.cslg.disk.example.file.dao.FileDao;
-import com.cslg.disk.example.file.entity.Picture;
 import com.cslg.disk.example.file.util.ImageUtil;
 import com.cslg.disk.utils.TencentCOSUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class FileServiceImpl implements FileService  {
@@ -27,25 +25,28 @@ public class FileServiceImpl implements FileService  {
     FileUtil fileUtil = new FileUtil();
 
     @Override
-    public Iterable<File> getFile(SearchPageDto searchPageDto) {
+    public Map<String, Object> getFile(SearchPageDto searchPageDto) {
         int pageSize = searchPageDto.getPageSize();
         int typeCode = searchPageDto.getTypeCode();
         int pageNo = searchPageDto.getPageNo();
 
         int start = pageNo * pageSize;
         int end = start + pageSize;
-        Iterable<File> fileList = fileDao.findByPage(start, end, typeCode);
+        List<File> fileList = fileDao.findByPage(start, end, typeCode);
         if (typeCode == 1) {
             fileList.forEach(item -> {
                 String thumbnailName = thumbnailDao.findByVideoUrl(item.getUrl());
                 item.setThumbnailName("http://localhost:9999/" + thumbnailName + ".jpg");
             });
         }
-        return fileList;
+        Map<String, Object> map = new HashMap<>();
+        map.put("total", fileDao.findAll().stream().filter(e -> e.getTypeCode() == typeCode).count());
+        map.put("files", fileList);
+        return map;
     }
 
     @Override
-    public Iterable<File> getFile() {
+    public List<File> getFile() {
         return fileDao.findAll();
     }
 
