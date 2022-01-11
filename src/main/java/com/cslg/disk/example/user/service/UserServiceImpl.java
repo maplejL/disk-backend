@@ -30,7 +30,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Map<String, Object> login(LoginDto loginDto) {
-
+        if ("".equals(loginDto.getUsername()) || "".equals(loginDto.getPassword())) {
+            throw new BusinessException("用户名或密码为空");
+        }
         MyUser userInfo = userDao.findByUserName(loginDto.getUsername());
         String password = Optional.ofNullable(userInfo).map(e -> e.getPassword()).orElse("");
         if (password.length() == 0) {
@@ -71,6 +73,10 @@ public class UserServiceImpl implements UserService {
     public MyUser register(RegisterDto registerDto) {
         if (registerDto == null) {
             throw new BusinessException("无注册信息");
+        }
+        MyUser byUserName = userDao.findByUserName(registerDto.getUsername());
+        if (byUserName != null) {
+            throw new BusinessException("该用户名已存在");
         }
         MyUser myUser = new MyUser();
         registerDto.setPassword(getMd5Password(registerDto.getPassword()));
