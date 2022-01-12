@@ -7,7 +7,7 @@ import javax.persistence.Entity;
 
 @Data
 @Entity
-public class File extends BaseEntity {
+public class MyFile extends BaseEntity {
     private String url;
 
     private String size;
@@ -19,4 +19,6 @@ public class File extends BaseEntity {
     private String thumbnailName;
 
     private String typeName;
+
+    private static Boolean isHover = false;
 }

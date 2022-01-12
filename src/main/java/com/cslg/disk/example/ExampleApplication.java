@@ -2,12 +2,14 @@ package com.cslg.disk.example;
 
 import com.alibaba.druid.sql.visitor.functions.Char;
 import com.cslg.disk.config.SwaggerConfig;
-import net.bytebuddy.utility.RandomString;
+import com.google.common.collect.Lists;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.boot.SpringApplication;
 import sun.misc.BASE64Decoder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Import;
@@ -15,9 +17,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 import sun.misc.BASE64Encoder;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 @SpringBootApplication
@@ -37,14 +39,106 @@ public class ExampleApplication extends SpringBootServletInitializer {
         return sb.toString();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args){
 
 //        ExampleApplication exampleApplication = new ExampleApplication();
 //        int[] nums1 = {-1,0,1,2,-1,-4};
 //        System.out.println(exampleApplication.threeSum(nums1));
         SpringApplication.run(ExampleApplication.class, args);
+//        exampleApplication.writeIntoUS();
     }
 
+    public void writeIntoUS() {
+        String excelPath = "C:\\Users\\user\\Desktop\\langs.xlsx";
+        File excel = new File(excelPath);
+        Properties properties = new Properties();
+        if (excel.exists()) {
+            String[] split = excel.getName().split("\\.");
+            try {
+                Workbook wb = new XSSFWorkbook(excel);
+                Sheet sheet = wb.getSheetAt(0);
+                int firstRowIndex = sheet.getFirstRowNum()+1;   //第一行是列名，所以不读
+                int lastRowIndex = sheet.getLastRowNum();
+                List<List<Cell>> lists = new ArrayList<>();
+                for(int rIndex = firstRowIndex; rIndex <= lastRowIndex; rIndex++) {   //遍历行
+                    System.out.println("rIndex: " + rIndex);
+                    Row row = sheet.getRow(rIndex);
+                    List<Cell> list = Lists.newArrayList();
+                    if (row != null) {
+                        int firstCellIndex = row.getFirstCellNum();
+                        int lastCellIndex = row.getLastCellNum();
+                        for (int cIndex = firstCellIndex; cIndex < lastCellIndex; cIndex++) {
+                            list.add(row.getCell(cIndex));//遍历列
+//                            Cell cell = row.getCell(cIndex);
+//                            if (cell != null) {
+//                                System.out.println(cell.toString());
+//                            }
+                        }
+                    }
+                    lists.add(list);
+                }
+                FileOutputStream fileOutputStream = new FileOutputStream("E:\\毕设\\disk-code-backend\\src\\main\\resources\\static\\en-US.properties");
+                lists.stream().forEach(e -> {
+                    properties.setProperty(e.get(0).getStringCellValue(), e.get(4).getStringCellValue());
+                });
+                properties.store(fileOutputStream,null);
+                log.info("导入成功");
+                fileOutputStream.flush();
+                fileOutputStream.close();
+                wb.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InvalidFormatException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void writeIntoCN() {
+        String excelPath = "C:\\Users\\user\\Desktop\\langs.xlsx";
+        File excel = new File(excelPath);
+        Properties properties = new Properties();
+        if (excel.exists()) {
+            String[] split = excel.getName().split("\\.");
+            try {
+                Workbook wb = new XSSFWorkbook(excel);
+                Sheet sheet = wb.getSheetAt(0);
+                int firstRowIndex = sheet.getFirstRowNum()+1;   //第一行是列名，所以不读
+                int lastRowIndex = sheet.getLastRowNum();
+                List<List<Cell>> lists = new ArrayList<>();
+                for(int rIndex = firstRowIndex; rIndex <= lastRowIndex; rIndex++) {   //遍历行
+                    System.out.println("rIndex: " + rIndex);
+                    Row row = sheet.getRow(rIndex);
+                    List<Cell> list = Lists.newArrayList();
+                    if (row != null) {
+                        int firstCellIndex = row.getFirstCellNum();
+                        int lastCellIndex = row.getLastCellNum();
+                        for (int cIndex = firstCellIndex; cIndex < lastCellIndex; cIndex++) {
+                            list.add(row.getCell(cIndex));//遍历列
+//                            Cell cell = row.getCell(cIndex);
+//                            if (cell != null) {
+//                                System.out.println(cell.toString());
+//                            }
+                        }
+                    }
+                    lists.add(list);
+                }
+                FileOutputStream fileOutputStream = new FileOutputStream("E:\\毕设\\disk-code-backend\\src\\main\\resources\\static\\zh-CN.properties");
+                lists.stream().forEach(e -> {
+                    properties.setProperty(e.get(0).getStringCellValue(), e.get(3).getStringCellValue());
+                });
+                properties.store(fileOutputStream,null);
+                log.info("导入成功");
+                fileOutputStream.flush();
+                fileOutputStream.close();
+                wb.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InvalidFormatException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     public String valiate(String s) {
         String regix1="[a-z,A-Z]";

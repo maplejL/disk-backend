@@ -8,18 +8,23 @@ import com.qcloud.cos.exception.CosClientException;
 import com.qcloud.cos.exception.CosServiceException;
 import com.qcloud.cos.model.*;
 import com.qcloud.cos.region.Region;
+import com.qcloud.cos.transfer.*;
+import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @Author: zh
  * @Date: 2020/6/5 16:22
  */
-
+@Data
 public class TencentCOSUtil {
     // 存储桶名称
     private static final String bucketName = "disk-1305749742";
@@ -36,9 +41,106 @@ public class TencentCOSUtil {
     // 配置 COS 区域 就购买时选择的区域 我这里是 广州（guangzhou）
     private static ClientConfig clientConfig = new ClientConfig(new Region("ap-shanghai"));
 
+    public static COSClient cosClient;
+    static {
+        //创建cos客户端连接
+        cosClient = new COSClient(credentials,clientConfig);
+    }
+
+    // Prints progress while waiting for the transfer to finish.
+    private static void showTransferProgress(Transfer transfer) {
+        System.out.println(transfer.getDescription());
+        do {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                return;
+            }
+            TransferProgress progress = transfer.getProgress();
+            long so_far = progress.getBytesTransferred();
+            long total = progress.getTotalBytesToTransfer();
+            double pct = progress.getPercentTransferred();
+            System.out.printf("[%d / %d]\n", so_far, total);
+        } while (transfer.isDone() == false);
+        System.out.println(transfer.getState());
+    }
+    private static File transferToFile(MultipartFile multipartFile) {
+//        选择用缓冲区来实现这个转换即使用java 创建的临时文件 使用 MultipartFile.transferto()方法 。
+        File file = null;
+        try {
+            String originalFilename = multipartFile.getOriginalFilename();
+            String[] filename = originalFilename.split(".");
+            file=File.createTempFile(filename[0], filename[1]);
+            multipartFile.transferTo(file);
+            file.deleteOnExit();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file;
+    }
+    // 上传文件, 根据文件大小自动选择简单上传或者分块上传。
+    public static String uploadFile(MultipartFile file) {
+        ExecutorService threadPool = Executors.newFixedThreadPool(100);
+        // 传入一个threadpool, 若不传入线程池, 默认TransferManager中会生成一个单线程的线程池。
+        TransferManager transferManager = new TransferManager(cosClient, threadPool);
+        String key = "test.mp4";
+        File localFile = new File("C:\\Users\\user\\Videos\\Captures\\test.mp4");
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, localFile);
+        try {
+            // 返回一个异步结果Upload, 可同步的调用waitForUploadResult等待upload结束, 成功返回UploadResult, 失败抛出异常.
+            long startTime = System.currentTimeMillis();
+            Upload upload = transferManager.upload(putObjectRequest);
+            showTransferProgress(upload);
+            UploadResult uploadResult = upload.waitForUploadResult();
+            key = uploadResult.getKey();
+            long endTime = System.currentTimeMillis();
+            System.out.println("used time: " + (endTime - startTime) / 1000);
+            System.out.println(uploadResult.getETag());
+        } catch (CosServiceException e) {
+            e.printStackTrace();
+        } catch (CosClientException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        transferManager.shutdownNow();
+        cosClient.shutdown();
+        return key;
+    }
+
+    // 上传文件（上传过程中暂停, 并继续上传)
+    public static void pauseUploadFileAndResume() {
+        ExecutorService threadPool = Executors.newFixedThreadPool(4);
+        // 传入一个threadpool, 若不传入线程池, 默认TransferManager中会生成一个单线程的线程池。
+        TransferManager transferManager = new TransferManager(cosClient, threadPool);
+
+        String key = "aaa/bbb.txt";
+        File localFile = new File("src/test/resources/len30M.txt");
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, localFile);
+        try {
+            // 返回一个异步结果Upload, 可同步的调用waitForUploadResult等待upload结束, 成功返回UploadResult, 失败抛出异常.
+            Upload upload = transferManager.upload(putObjectRequest);
+            Thread.sleep(10000);
+            PersistableUpload persistableUpload = upload.pause();
+            upload = transferManager.resumeUpload(persistableUpload);
+            showTransferProgress(upload);
+            UploadResult uploadResult = upload.waitForUploadResult();
+            System.out.println(uploadResult.getETag());
+        } catch (CosServiceException e) {
+            e.printStackTrace();
+        } catch (CosClientException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        transferManager.shutdownNow();
+        cosClient.shutdown();
+    }
+
     public static String uploadfile(MultipartFile file){
-        // 创建 COS 客户端连接
-        COSClient cosClient = new COSClient(credentials,clientConfig);
+
         String fileName = file.getOriginalFilename();
         try {
             String substring = fileName.substring(fileName.lastIndexOf("."));
