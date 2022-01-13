@@ -1,5 +1,6 @@
 package com.cslg.disk.example.file.util;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
@@ -36,7 +37,7 @@ public class MutiThreadDownLoad {
         this.latch = latch;
     }
 
-    public void executeDownLoad() {
+    public HttpServletResponse executeDownLoad(HttpServletResponse res) {
 
         try {
             URL url = new URL(serverPath);
@@ -65,13 +66,17 @@ public class MutiThreadDownLoad {
                     System.out.println("线程" + threadId + "下载:" + startIndex + "字节~" + endIndex + "字节");
                     new DownLoadThread(threadId, startIndex, endIndex).start();
                 }
+                res.setCharacterEncoding("utf-8");
+                res.setContentType("application/octet-stream");
+                res.setContentLength(length);
+                res.setHeader("Content-Disposition", "attachment; filename=1");
 
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        return res;
 
     }
 

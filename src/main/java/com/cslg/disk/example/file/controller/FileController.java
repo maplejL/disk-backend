@@ -2,6 +2,7 @@ package com.cslg.disk.example.file.controller;
 
 import com.cslg.disk.common.ResponseMessage;
 import com.cslg.disk.example.file.dao.FileDao;
+import com.cslg.disk.example.file.dto.DeleteFileDto;
 import com.cslg.disk.example.file.dto.SearchPageDto;
 import com.cslg.disk.example.file.entity.MyFile;
 import com.cslg.disk.example.file.service.FileService;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -49,6 +51,18 @@ public class FileController {
     @UserLoginToken
     public ResponseMessage downloadFile(@RequestParam(value = "url") String url,
                                         HttpServletResponse response) throws IOException {
-        return ResponseMessage.success(fileService.downloadFile(url,"E:\\毕设\\disk-code-backend\\src\\main\\resources\\static"));
+        return ResponseMessage.success(fileService.downloadFile(url,"E:\\毕设\\disk-code-backend\\src\\main\\resources\\static", response));
+    }
+
+    @DeleteMapping("/deleteFile")
+    @UserLoginToken
+    public ResponseMessage deleteFile(@RequestBody DeleteFileDto deleteFileDto) {
+        return ResponseMessage.success(fileService.deleteFile(deleteFileDto.getIds()));
+    }
+
+    @PutMapping("/refactorFile")
+    @UserLoginToken
+    public ResponseMessage refactorFile(@RequestBody MyFile file) {
+        return ResponseMessage.success(fileService.refactorFile(file));
     }
 }

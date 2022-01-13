@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -20,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 @Service
+@Transactional
 public class FileServiceImpl implements FileService  {
     @Autowired
     private FileDao fileDao;
@@ -112,7 +115,7 @@ public class FileServiceImpl implements FileService  {
     }
 
     @Override
-    public Object downloadFile(String urlStr,String savePath) throws IOException {
+    public Object downloadFile(String urlStr,String savePath, HttpServletResponse res) throws IOException {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         String filename = (new File(urlStr)).getName();
@@ -122,7 +125,7 @@ public class FileServiceImpl implements FileService  {
         MutiThreadDownLoad mutiThreadDownLoad = new MutiThreadDownLoad(threadSize,urlStr,savePath,latch);
         long startTime = System.currentTimeMillis();
         try {
-            mutiThreadDownLoad.executeDownLoad();
+            res = mutiThreadDownLoad.executeDownLoad(res);
             latch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -133,5 +136,17 @@ public class FileServiceImpl implements FileService  {
         map.put("time", (endTime - startTime) / 1000);
         map.put("path", savePath);
         return map;
+    }
+
+    @Override
+    public Object deleteFile(List<Integer> ids) {
+        fileDao.batchDelete(ids);
+        return null;
+    }
+
+    @Override
+    public Object refactorFile(MyFile file) {
+        MyFile save = fileDao.save(file);
+        return save;
     }
 }
