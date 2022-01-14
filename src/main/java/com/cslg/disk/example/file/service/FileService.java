@@ -21,4 +21,6 @@ public interface FileService {
     Object deleteFile(List<Integer> ids);
 
     Object refactorFile(MyFile file);
+
+    Map<String, Object> getDeleteFiles(SearchPageDto searchPageDto);
 }

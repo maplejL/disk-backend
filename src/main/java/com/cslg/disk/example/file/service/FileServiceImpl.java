@@ -149,4 +149,23 @@ public class FileServiceImpl implements FileService  {
         MyFile save = fileDao.save(file);
         return save;
     }
+
+    public Map<String, Object> getDeleteFiles(SearchPageDto searchPageDto) {
+        int pageSize = searchPageDto.getPageSize();
+        int typeCode = searchPageDto.getTypeCode();
+        int pageNo = searchPageDto.getPageNo();
+
+        int start = pageNo * pageSize;
+        List<MyFile> myFileList = fileDao.findDeleteByPage(start, pageSize, typeCode);
+        if (typeCode == 1) {
+            myFileList.forEach(item -> {
+                String thumbnailName = thumbnailDao.findByVideoUrl(item.getUrl());
+                item.setThumbnailName("http://localhost:9999/" + thumbnailName + ".jpg");
+            });
+        }
+        Map<String, Object> map = new HashMap<>();
+        map.put("total", fileDao.findAll().stream().filter(e -> e.getTypeCode() == typeCode).count());
+        map.put("files", myFileList);
+        return map;
+    }
 }

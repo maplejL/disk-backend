@@ -39,6 +39,13 @@ public class FileController {
         return fileService.getFile();
     }
 
+    //获取全部文件
+    @PostMapping("/getDeleteFiles")
+    @UserLoginToken
+    public ResponseMessage getDeleteFiles(@RequestBody SearchPageDto searchPageDto) {
+        return ResponseMessage.success(fileService.getDeleteFiles(searchPageDto));
+    }
+
     @PostMapping("/upload")
     @UserLoginToken
     public ResponseMessage uploadFile(@RequestParam(value = "file") MultipartFile file,

@@ -30,31 +30,16 @@ spring:
         jedis:
             pool:
                 max-active: 8
-    security:
-        oauth2:
-            resourceserver:
-                opaquetoken:
-                    introspection-uri:
+#    security:
+#        oauth2:
+#            resourceserver:
+#                opaquetoken:
+#                    introspection-uri:
 server:
     port: 9999
 logging:
     level:
         root: info
-auth:
-    privatKey: MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBANFPL7zTO7aE6DoU
-        KZ3OqgUXWiZ/3vdObME9UOkb6rvqjEkWdDJVCoojk8/BVdWTcPRTwug6mlXTgOrc
-        gyHRp7o37NlM8X+kB7RMqHoyi8C1I8iEr9f5vw6obojPBmoe+vjJNfBAznMXDc78
-        P5rESnkMAec5E4Ao8CnAjAb5fE2jAgMBAAECgYBD2sYBEwGitAeM/IhZTmwz5lQl
-        cwLXbac4Jiaay6AXd3wvHYZh4svd6Ja8nVK0QG435weivYzXEhATE5W3Wv5ie3oM
-        jNsG2C5o/znuYaMYM2M5zJrAwRqafpteFBQhv9GaflV3G6wH+GhXlAjlopPihcOd
-        Y4M0odSHOxpHn0l/4QJBAP9zsmLMM9M3rq7JcZf/qDN9LCrVi1dXCpYrXhhCuR1M
-        9w+TQtimrz6MIEvaFcO7Hj77CWbo1iXoJXWqBUlSL+kCQQDRwiWBid0LMEH8+ji7
-        4crg/fQ9ppE4jHU5Wh/meisjnlCToeOK9tMw+A4dfEXMOTZ9Cq8tLhvE5BjUOho/
-        +MWrAkEA5enSzxstNdhy7zu9cmmWkKkDXJYQMI7Vp2zm5nz/MUD5SFppGqeDKI9j
-        7gEd/6llQpgc0TOUsk9rj6hz05cWKQJBAIS9+oJJvqsP9RKlPzYXJA7SZ7iEKq7A
-        pIaQ9FMkyRwXWiKzdo5AuVHqCPS76mfdZRAorMdIwKYPO29C/c2yH1UCQBlnx74p
-        iut/xzXcxi6d7yRlt5d9aNpQw3uw/n1fjbarYAZ3DyAXz6N72Kbl/fpP4Fe/nI4g
-        BxjUiBCcSnkkDz0=
 
 
 

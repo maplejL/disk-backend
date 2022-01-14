@@ -1,23 +1,25 @@
 package com.cslg.disk.example.socket;
 
+import com.alibaba.druid.util.StringUtils;
+import com.cslg.disk.example.file.dao.FileDao;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import sun.rmi.runtime.Log;
 
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
+import javax.annotation.PostConstruct;
+import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-
 
 @Component
 @ServerEndpoint("/websocket/{shopId}")
@@ -30,7 +32,7 @@ public class WebSocket {
     private static Map<String,Session> sessionPool = new HashMap<String,Session>();
 
     @OnOpen
-    public void onOpen(Session session, @PathParam(value="shopId")String shopId) {
+    public void onOpen(Session session, @RequestParam(value="shopId")String shopId) {
         this.session = session;
         webSockets.add(this);
         sessionPool.put(shopId, session);
