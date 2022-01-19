@@ -1,21 +1,15 @@
 package com.cslg.disk.example;
 
-import com.alibaba.druid.sql.visitor.functions.Char;
-import com.cslg.disk.config.SwaggerConfig;
 import com.google.common.collect.Lists;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.boot.SpringApplication;
-import sun.misc.BASE64Decoder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
-import sun.misc.BASE64Encoder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,28 +20,11 @@ import java.util.*;
 @EnableSwagger2
 @EnableJpaAuditing
 @Slf4j
-@Import(SwaggerConfig.class)
 public class ExampleApplication extends SpringBootServletInitializer {
-    public String getRandomString(int length){
-        String str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        Random random=new Random();
-        StringBuffer sb=new StringBuffer();
-        for(int i=0;i<length;i++){
-            int number=random.nextInt(62);
-            sb.append(str.charAt(number));
-        }
-        return sb.toString();
-    }
 
     public static void main(String[] args){
-
-//        ExampleApplication exampleApplication = new ExampleApplication();
-//        int[] nums1 = {-1,0,1,2,-1,-4};
-//        System.out.println(exampleApplication.threeSum(nums1));
         SpringApplication.run(ExampleApplication.class, args);
-//        exampleApplication.writeIntoUS();
     }
-
     public void writeIntoUS() {
         String excelPath = "C:\\Users\\user\\Desktop\\langs.xlsx";
         File excel = new File(excelPath);

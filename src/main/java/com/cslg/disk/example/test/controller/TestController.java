@@ -28,9 +28,9 @@ public class TestController {
 
     @SysLogAnno("测试")
     @GetMapping("/get")
-    public void doGet() {
+    public String doGet() {
         testService.get();
-        return;
+        return "123";
     }
 
     @GetMapping("/testRedis")
@@ -43,13 +43,13 @@ public class TestController {
 
     @RequestMapping("/sendAllWebSocket")
     public String test() {
-//        webSocket.sendAllMessage("清晨起来打开窗，心情美美哒~");
+        webSocket.sendAllMessage("清晨起来打开窗，心情美美哒~");
         return null;
     }
 
     @RequestMapping("/sendOneWebSocket")
     public String sendOneWebSocket() {
-//        webSocket.sendOneMessage("DPS007", "只要你乖给你买条gai！");
+        webSocket.sendOneMessage("DPS007", "只要你乖给你买条gai！");
         return "websocket单人发送";
     }
 

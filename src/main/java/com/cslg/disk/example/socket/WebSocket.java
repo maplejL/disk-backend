@@ -1,28 +1,17 @@
 package com.cslg.disk.example.socket;
 
-import com.alibaba.druid.util.StringUtils;
-import com.cslg.disk.example.file.dao.FileDao;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.PostConstruct;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 @Component
-@ServerEndpoint("/websocket/{shopId}")
+@ServerEndpoint(value = "/websocket/{id}")
 //此注解相当于设置访问URL
 public class WebSocket {
 
@@ -32,10 +21,10 @@ public class WebSocket {
     private static Map<String,Session> sessionPool = new HashMap<String,Session>();
 
     @OnOpen
-    public void onOpen(Session session, @RequestParam(value="shopId")String shopId) {
+    public void onOpen(Session session, @PathParam(value="id")String id) {
         this.session = session;
         webSockets.add(this);
-        sessionPool.put(shopId, session);
+        sessionPool.put(id, session);
         System.out.println("【websocket消息】有新的连接，总数为:"+webSockets.size());
     }
 
@@ -63,8 +52,8 @@ public class WebSocket {
     }
 
     // 此为单点消息
-    public void sendOneMessage(String shopId, String message) {
-        Session session = sessionPool.get(shopId);
+    public void sendOneMessage(String id, String message) {
+        Session session = sessionPool.get(id);
         if (session != null) {
             try {
                 session.getAsyncRemote().sendText(message);
