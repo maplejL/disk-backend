@@ -1,7 +1,8 @@
 package com.cslg.disk.example.test.service;
 
-import com.qcloud.cos.model.ObjectListing;
+import java.util.Date;
+import java.util.Map;
 
 public interface TestService {
-    public ObjectListing get();
+    public Map<String, Date> get();
 }

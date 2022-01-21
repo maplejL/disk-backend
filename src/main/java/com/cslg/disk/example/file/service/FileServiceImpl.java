@@ -168,4 +168,11 @@ public class FileServiceImpl implements FileService  {
         map.put("files", myFileList);
         return map;
     }
+
+    @Override
+    public Map<String, Date> getFolders() {
+        TencentCOSUtil tencentCOSUtil = new TencentCOSUtil();
+        Map<String, Date> map = tencentCOSUtil.listFolders(TencentCOSUtil.bucketName);
+        return map;
+    }
 }

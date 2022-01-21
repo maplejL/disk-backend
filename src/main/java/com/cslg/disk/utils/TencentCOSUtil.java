@@ -10,13 +10,12 @@ import com.qcloud.cos.model.*;
 import com.qcloud.cos.region.Region;
 import com.qcloud.cos.transfer.*;
 import lombok.Data;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -27,7 +26,7 @@ import java.util.concurrent.Executors;
 @Data
 public class TencentCOSUtil {
     // 存储桶名称
-    private static final String bucketName = "disk-1305749742";
+    public static final String bucketName = "disk-1305749742";
     //secretId 秘钥id
     private static final String SecretId = "AKIDtfEahaFfqnVzGI6g3C6mESSEm6D7oGUU";
     //SecretKey 秘钥
@@ -64,6 +63,7 @@ public class TencentCOSUtil {
         } while (transfer.isDone() == false);
         System.out.println(transfer.getState());
     }
+
     private static File transferToFile(MultipartFile multipartFile) {
 //        选择用缓冲区来实现这个转换即使用java 创建的临时文件 使用 MultipartFile.transferto()方法 。
         File file = null;
@@ -168,7 +168,7 @@ public class TencentCOSUtil {
      * @throws CosClientException
      * @throws CosServiceException
      */
-    public static ObjectListing listObjects(String bucketName) throws CosClientException, CosServiceException {
+    public static ObjectListing listObjects(String bucketName,String folderName) throws CosClientException, CosServiceException {
         COSClient cosClient = new COSClient(credentials,clientConfig);
 
         // 获取 bucket 下成员（设置 delimiter）
@@ -181,7 +181,7 @@ public class TencentCOSUtil {
         // 设置 marker, (marker 由上一次 list 获取到, 或者第一次 list marker 为空)
         listObjectsRequest.setMarker("");
         // 设置最多 list 100 个成员,（如果不设置, 默认为 1000 个，最大允许一次 list 1000 个 key）
-        listObjectsRequest.setMaxKeys(100);
+//        listObjectsRequest.setMaxKeys(100);
 
         ObjectListing objectListing = cosClient.listObjects(listObjectsRequest);
         // 获取下次 list 的 marker
@@ -202,6 +202,46 @@ public class TencentCOSUtil {
             String StorageClassStr = cosObjectSummary.getStorageClass();
         }
         return objectListing;
+    }
+
+    /**
+     * 查看全部的文件夹
+     * @param bucketName
+     * @return
+     * @throws CosClientException
+     * @throws CosServiceException
+     */
+    public static Map<String, Date> listFolders(String bucketName) throws CosClientException, CosServiceException {
+        COSClient cosClient = new COSClient(credentials,clientConfig);
+
+        // 获取 bucket 下成员（设置 delimiter）
+        ListObjectsRequest listObjectsRequest = new ListObjectsRequest();
+        listObjectsRequest.setBucketName(bucketName);
+        // 设置 list 的 prefix, 表示 list 出来的文件 key 都是以这个 prefix 开始
+        listObjectsRequest.setPrefix("");
+        // 设置 delimiter 为/, 即获取的是直接成员，不包含目录下的递归子成员
+        listObjectsRequest.setDelimiter("");
+        // 设置 marker, (marker 由上一次 list 获取到, 或者第一次 list marker 为空)
+        listObjectsRequest.setMarker("");
+        // 设置最多 list 100 个成员,（如果不设置, 默认为 1000 个，最大允许一次 list 1000 个 key）
+        listObjectsRequest.setMaxKeys(100000);
+
+        ObjectListing objectListing = cosClient.listObjects(listObjectsRequest);
+        Map<String, Date> folders = new HashMap<>();
+        List<COSObjectSummary> objectSummaries = objectListing.getObjectSummaries();
+        for (COSObjectSummary objectSummary : objectSummaries) {
+            Date newDate = objectSummary.getLastModified();
+            String[] split = objectSummary.getKey().split("/");
+            if (!folders.containsKey(split[0])) {
+                folders.put(split[0], newDate);
+            } else {
+                if (newDate.after(folders.get(split[0]))) {
+                    folders.put(split[0], newDate);
+                }
+            }
+        }
+        folders.remove("cos-access-log");
+        return folders;
     }
 
 }

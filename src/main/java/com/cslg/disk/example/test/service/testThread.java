@@ -77,13 +77,30 @@ public class testThread {
         }
     }
 
-    public static void main(String[] args) {
-        int[] nums = new int[20000];
-        for (int i = 0; i < 20000; i++) {
-            int random = (int) Math.random()*(5-1+1)+1;
-            nums[i] = random;
+    public int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> map = new HashMap<>();
+        int[] res = new int[2];
+        for (int i = 0; i < nums.length; i++) {
+            if (map.containsKey(target - nums[i])) {
+                res[0] = i;
+                res[1] = map.get(target - nums[i]);
+                break;
+            }
+            map.put(nums[i], i);
         }
-        boolean b = new testThread().containsDuplicate(nums);
-        System.out.println(b);
+        return res;
+    }
+
+    public void merge(int[] nums1, int m, int[] nums2, int n) {
+        for (int i = m+1; i < m+n; i++) {
+            nums1[i] = nums2[i-m-1];
+        }
+        Arrays.sort(nums1);
+    }
+
+    public static void main(String[] args) {
+        int[] nums = {3,2,3};
+        int[] ints = new testThread().twoSum(nums, 6);
+        System.out.println(ints);
     }
 }

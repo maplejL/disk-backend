@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -23,4 +24,6 @@ public interface FileService {
     Object refactorFile(MyFile file);
 
     Map<String, Object> getDeleteFiles(SearchPageDto searchPageDto);
+
+    Map<String, Date> getFolders();
 }
