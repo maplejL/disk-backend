@@ -8,4 +8,6 @@ public interface FolderService {
     void initFolders();
 
     List<Folder> getFolders();
+
+    Object addFolder(String name);
 }

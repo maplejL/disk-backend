@@ -17,8 +17,14 @@ public interface FileDao extends JpaRepository<MyFile, Integer> {
     @Query(value = "update my_file set is_delete = 1 where id in :ids", nativeQuery = true)
     Integer batchDelete(List<Integer> ids);
 
-    @Query(value = "select * from my_file where type_code = :typeCode and is_delete=1 limit :start,:size", nativeQuery = true)
-    ArrayList<MyFile> findDeleteByPage(int start, int size, int typeCode);
-//    @Query(value = "insert into (select relation_table from support_dict where type_code = :typeCode)('url', 'file_name', 'size') values()", nativeQuery = true)
-//    <S extends Picture> S saveByType(File file, int typeCode);
+    @Query(value = "select * from my_file where is_delete=1 limit :start,:size", nativeQuery = true)
+    ArrayList<MyFile> findDeleteByPage(int start, int size);
+
+    @Query(value = "update my_file set is_delete=0 where id in :ids", nativeQuery = true)
+    @Modifying
+    Integer recoverFiles(List<Integer> ids);
+
+    @Modifying
+    @Query(value = "delete from my_file where id in :ids", nativeQuery = true)
+    Integer completelyDelete(List<Integer> ids);
 }

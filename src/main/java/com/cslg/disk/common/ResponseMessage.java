@@ -44,7 +44,10 @@ public class ResponseMessage<T> {
     }
 
     public static ResponseMessage success(Object data) {
-        return new ResponseMessage(CODE_SUCCESS, MSG_SUCCESS, data);
+        if (data != null) {
+            return new ResponseMessage(CODE_SUCCESS, MSG_SUCCESS, data);
+        }
+        return new ResponseMessage(CODE_FAIL,MSG_FAIL,data);
     }
 
     public static ResponseMessage fail() {

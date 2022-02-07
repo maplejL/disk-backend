@@ -1,5 +1,6 @@
 package com.cslg.disk.example.file.service;
 
+import com.cslg.disk.common.exception.BusinessException;
 import com.cslg.disk.example.file.dao.ThumbnailDao;
 import com.cslg.disk.example.file.dto.SearchPageDto;
 import com.cslg.disk.example.file.entity.MyFile;
@@ -33,6 +34,19 @@ public class FileServiceImpl implements FileService  {
     @Autowired
     private FileUtil fileUtil;
 
+    private static Map<Integer, List<String>> typeAndCode = new HashMap<>();
+
+    static {
+        List<String> type1 = new ArrayList<>();
+        List<String> type4 = new ArrayList<>();
+        type1.add("mp4");
+        type4.add("jpg");
+        type4.add("png");
+        type4.add("jpeg");
+        typeAndCode.put(1,type1);
+        typeAndCode.put(4,type4);
+    }
+
     @Override
     public Map<String, Object> getFile(SearchPageDto searchPageDto) {
         int pageSize = searchPageDto.getPageSize();
@@ -62,6 +76,11 @@ public class FileServiceImpl implements FileService  {
 
         if (file == null) {
             return null;
+        }
+        String type = (file.getOriginalFilename().split("\\."))[1];
+        List<String> typeNames = typeAndCode.get(typeCode);
+        if (!typeNames.contains(type)) {
+            throw new BusinessException("上传的文件类型错误!");
         }
         String uploadFilePath = TencentCOSUtil.uploadfile(file);
         long size = file.getSize();
@@ -156,15 +175,15 @@ public class FileServiceImpl implements FileService  {
         int pageNo = searchPageDto.getPageNo();
 
         int start = pageNo * pageSize;
-        List<MyFile> myFileList = fileDao.findDeleteByPage(start, pageSize, typeCode);
-        if (typeCode == 1) {
-            myFileList.forEach(item -> {
+        List<MyFile> myFileList = fileDao.findDeleteByPage(start, pageSize);
+        myFileList.forEach(item -> {
+            if (item.getTypeCode() == 1) {
                 String thumbnailName = thumbnailDao.findByVideoUrl(item.getUrl());
                 item.setThumbnailName("http://localhost:9999/" + thumbnailName + ".jpg");
-            });
-        }
+            }
+        });
         Map<String, Object> map = new HashMap<>();
-        map.put("total", fileDao.findAll().stream().filter(e -> e.getTypeCode() == typeCode).count());
+        map.put("total", fileDao.findAll().stream().filter(e -> e.getIsDelete()==1).count());
         map.put("files", myFileList);
         return map;
     }
@@ -174,5 +193,15 @@ public class FileServiceImpl implements FileService  {
         TencentCOSUtil tencentCOSUtil = new TencentCOSUtil();
         Map<String, Date> map = tencentCOSUtil.listFolders(TencentCOSUtil.bucketName);
         return map;
+    }
+
+    @Override
+    public Boolean recoverFiles(List<Integer> ids) {
+        return fileDao.recoverFiles(ids) > 0;
+    }
+
+    @Override
+    public Boolean completelyDelete(List<Integer> ids) {
+        return fileDao.completelyDelete(ids) > 0;
     }
 }

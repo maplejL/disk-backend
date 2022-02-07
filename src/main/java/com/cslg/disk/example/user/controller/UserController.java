@@ -5,6 +5,7 @@ import com.cslg.disk.common.ResponseMessage;
 import com.cslg.disk.example.user.anno.UserLoginToken;
 import com.cslg.disk.example.user.dto.LoginDto;
 import com.cslg.disk.example.user.dto.RegisterDto;
+import com.cslg.disk.example.user.dto.UpdatePwdDto;
 import com.cslg.disk.example.user.entity.MyUser;
 import com.cslg.disk.example.user.service.UserService;
 import com.cslg.disk.example.user.util.RSAUtils;
@@ -49,16 +50,22 @@ public class UserController extends GlobalExceptionHandler {
 
     @GetMapping("/getPublicKey")
     @ResponseBody
-    public ResponseMessage getPublicKey() throws Exception {
+    public ResponseMessage getPublicKey() {
 //        Map<String, String> keys= RSAUtils.createKeys(512);
         Map<String, String> keys = new HashMap<>();
         keys.put("publicKey", publicKey);
         return ResponseMessage.isNul(keys);
     }
 
+    @PutMapping("/update")
+    @ResponseBody
+    public ResponseMessage update(@RequestBody UpdatePwdDto updatePwdDto) {
+        return ResponseMessage.isNul(userService.updatePwd(updatePwdDto));
+    }
+
+    @GetMapping("/getFriends")
     @UserLoginToken
-    @GetMapping("/getMessage")
-    public String getMessage(){
-        return "你已通过验证";
+    public ResponseMessage getFriends(@RequestParam(value = "id")Integer id) {
+        return ResponseMessage.success(userService.getFriends(id));
     }
 }

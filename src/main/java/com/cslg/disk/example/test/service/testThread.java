@@ -97,10 +97,4 @@ public class testThread {
         }
         Arrays.sort(nums1);
     }
-
-    public static void main(String[] args) {
-        int[] nums = {3,2,3};
-        int[] ints = new testThread().twoSum(nums, 6);
-        System.out.println(ints);
-    }
 }

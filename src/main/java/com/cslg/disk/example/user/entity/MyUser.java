@@ -19,4 +19,8 @@ public class MyUser extends BaseEntity{
     //1为男，2为女
     private Integer sex;
 
+    private String phone;
+
+    private String address;
+
 }

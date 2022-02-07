@@ -1,5 +1,6 @@
 package com.cslg.disk.example.redis;
 
+import java.util.List;
 import java.util.Map;
 
 public interface RedisService {
@@ -12,5 +13,7 @@ public interface RedisService {
     void setValue(String key, Object value);
     // 获取元素
     Object getValue(String key);
+
+    List<String> getValueList(String key);
 }
 

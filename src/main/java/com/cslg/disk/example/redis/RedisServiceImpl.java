@@ -1,11 +1,13 @@
 package com.cslg.disk.example.redis;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -29,10 +31,20 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
+    public List<String> getValueList(String key) {
+        Map<String, List<String>> value = (Map<String, List<String>>) getValue(key);
+        return value.get(key);
+    }
+
+    @Override
     public void setValue(String key, String value) {
         ValueOperations<String, Object> vo = redisTemplate.opsForValue();
         vo.set(key, value);
-        redisTemplate.expire(key, 30, TimeUnit.SECONDS); // 这里指的是1小时后失效
+        if ("token".equals(key)) {
+            redisTemplate.expire(key, 1, TimeUnit.HOURS);
+        } else {
+            redisTemplate.expire(key, 1, TimeUnit.HOURS); // 这里指的是1小时后失效
+        }
     }
 
     @Override

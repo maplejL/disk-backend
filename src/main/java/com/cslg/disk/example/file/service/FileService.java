@@ -26,4 +26,8 @@ public interface FileService {
     Map<String, Object> getDeleteFiles(SearchPageDto searchPageDto);
 
     Map<String, Date> getFolders();
+
+    Boolean recoverFiles(List<Integer> ids);
+
+    Boolean completelyDelete(List<Integer> ids);
 }

@@ -14,4 +14,8 @@ public class RegisterDto {
 
     //1为男，2为女
     private Integer sex;
+
+    private String phone;
+
+    private String address;
 }

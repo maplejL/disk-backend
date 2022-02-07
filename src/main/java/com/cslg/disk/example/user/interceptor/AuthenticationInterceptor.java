@@ -5,6 +5,8 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.cslg.disk.common.exception.BusinessException;
+import com.cslg.disk.example.redis.RedisService;
 import com.cslg.disk.example.user.anno.PassToken;
 import com.cslg.disk.example.user.anno.UserLoginToken;
 import com.cslg.disk.example.user.dao.UserDao;
@@ -28,8 +30,11 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
     @Autowired
     private UserDao userDao;
 
+    @Autowired
+    private RedisService redisService;
+
     @Override
-    public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object object) throws Exception {
+    public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object object) {
         String token = httpServletRequest.getHeader("token");// 从 http 请求头中取出 token
         // 如果不是映射到方法直接通过
         if (!(object instanceof HandlerMethod)) {
@@ -49,26 +54,30 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             UserLoginToken userLoginToken = method.getAnnotation(UserLoginToken.class);
             if (userLoginToken.required()) {
                 // 执行认证
-                if (token == null) {
-                    throw new RuntimeException("无token，请重新登录");
+                if (token == null || token.equals("")) {
+                    throw new BusinessException(401, "无token，请重新登录");
+                }
+                //token30分钟过期
+                if (redisService.getValue("token") == null) {
+                    throw new BusinessException(401, "token已失效，请重新登录");
                 }
                 // 获取 token 中的 user id
                 String userId;
                 try {
                     userId = JWT.decode(token).getAudience().get(0);
                 } catch (JWTDecodeException j) {
-                    throw new RuntimeException("401");
+                    throw new BusinessException(401, "token已失效，请重新登录");
                 }
                 MyUser user = userDao.findById(userId);
                 if (user == null) {
-                    throw new RuntimeException("用户不存在，请重新登录");
+                    throw new BusinessException("用户不存在，请重新登录");
                 }
                 // 验证 token
                 JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256(user.getPassword())).build();
                 try {
                     jwtVerifier.verify(token);
                 } catch (JWTVerificationException e) {
-                    throw new RuntimeException("401");
+                    throw new BusinessException(401, "token验证失败");
                 }
                 return true;
             }

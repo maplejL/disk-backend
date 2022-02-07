@@ -3,10 +3,14 @@ package com.cslg.disk.example.user.service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.cslg.disk.common.exception.BusinessException;
+import com.cslg.disk.example.redis.RedisService;
 import com.cslg.disk.example.user.dao.UserDao;
+import com.cslg.disk.example.user.dao.UserFriendDao;
 import com.cslg.disk.example.user.dto.LoginDto;
 import com.cslg.disk.example.user.dto.RegisterDto;
+import com.cslg.disk.example.user.dto.UpdatePwdDto;
 import com.cslg.disk.example.user.entity.MyUser;
+import com.cslg.disk.example.user.entity.UserRelation;
 import com.cslg.disk.example.user.util.RSAUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
@@ -18,6 +22,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,6 +32,12 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private RedisService redisService;
+
+    @Autowired
+    private UserFriendDao userFriendDao;
 
     @Override
     public Map<String, Object> login(LoginDto loginDto) {
@@ -45,6 +56,7 @@ public class UserServiceImpl implements UserService {
                 map.put("token",(Object) token);
                 userInfo.setPassword("空");
                 map.put("userInfo", userInfo);
+                redisService.setValue("token", token);
                 return map;
             }
             throw new BusinessException("用户密码不正确");
@@ -83,6 +95,28 @@ public class UserServiceImpl implements UserService {
         BeanUtils.copyProperties(registerDto, myUser);
         MyUser save = userDao.save(myUser);
         return save;
+    }
+
+    @Override
+    public Object updatePwd(UpdatePwdDto updatePwdDto) {
+        String newPassword = getMd5Password(updatePwdDto.getNewPassword());
+        MyUser user = userDao.findById(updatePwdDto.getId());
+        user.setPassword(newPassword);
+        MyUser save = userDao.save(user);
+        return save;
+    }
+
+    @Override
+    public List<MyUser> getFriends(Integer id) {
+        if (null == id) {
+            return null;
+        }
+        List<Integer> friendIds = userFriendDao.getFriendIds(id);
+        if (friendIds.size() == 0) {
+            return null;
+        }
+        List<MyUser> users = userDao.findByIds(friendIds);
+        return users;
     }
 
     public String getToken(MyUser user) {

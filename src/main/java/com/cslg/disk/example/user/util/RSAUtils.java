@@ -124,7 +124,7 @@ public class RSAUtils {
             return new String(rsaSplitCodec(cipher, Cipher.DECRYPT_MODE, data, privateKey.getModulus().bitLength()),
                     CHARSET);
         } catch (Exception e) {
-            throw new RuntimeException("解密字符串[" + data + "]时遇到异常", e);
+            throw new RuntimeException("加密字符串时遇到异常,请刷新页面", e);
         }
     }
 
@@ -142,7 +142,7 @@ public class RSAUtils {
             return Base64.encodeBase64URLSafeString(rsaSplitCodec(cipher, Cipher.ENCRYPT_MODE, data.getBytes(CHARSET),
                     privateKey.getModulus().bitLength()));
         } catch (Exception e) {
-            throw new RuntimeException("加密字符串[" + data + "]时遇到异常", e);
+            throw new RuntimeException("加密字符串时遇到异常,请刷新页面", e);
         }
     }
 
@@ -160,7 +160,7 @@ public class RSAUtils {
             return new String(rsaSplitCodec(cipher, Cipher.DECRYPT_MODE, Base64.decodeBase64(data),
                     publicKey.getModulus().bitLength()), CHARSET);
         } catch (Exception e) {
-            throw new RuntimeException("解密字符串[" + data + "]时遇到异常", e);
+            throw new RuntimeException("加密字符串时遇到异常,请刷新页面", e);
         }
 
     }

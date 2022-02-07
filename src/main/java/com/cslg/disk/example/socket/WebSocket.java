@@ -1,12 +1,16 @@
 package com.cslg.disk.example.socket;
 
+import com.cslg.disk.example.redis.RedisService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -14,6 +18,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @ServerEndpoint(value = "/websocket/{id}")
 //此注解相当于设置访问URL
 public class WebSocket {
+
+    @Autowired
+    private RedisService redisService;
 
     private Session session;
 
@@ -25,6 +32,14 @@ public class WebSocket {
         this.session = session;
         webSockets.add(this);
         sessionPool.put(id, session);
+        List<String> ids = redisService.getValueList("userId");
+        if (ids == null) {
+            ids = new ArrayList<>();
+        }
+        Map<String, List<String>> map = new HashMap<>();
+        ids.add(id);
+        map.put("userId", ids);
+        redisService.setValue("userId", map);
         System.out.println("【websocket消息】有新的连接，总数为:"+webSockets.size());
     }
 

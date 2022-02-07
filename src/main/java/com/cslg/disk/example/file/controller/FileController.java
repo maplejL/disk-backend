@@ -7,6 +7,7 @@ import com.cslg.disk.example.file.dto.SearchPageDto;
 import com.cslg.disk.example.file.entity.MyFile;
 import com.cslg.disk.example.file.service.FileService;
 import com.cslg.disk.example.user.anno.UserLoginToken;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,14 +49,14 @@ public class FileController {
 
     @PostMapping("/upload")
     @UserLoginToken
-    public ResponseMessage uploadFile(@RequestParam(value = "file") MultipartFile file,
+    public ResponseMessage uploadFile( @RequestParam(value = "file") MultipartFile file,
                                       @RequestParam(value = "typeCode") int typeCode,
                                       @RequestParam(value = "targetFilePath") String targetFilePath) {
         return ResponseMessage.success(fileService.uploadFile(file, typeCode, targetFilePath));
     }
 
     @GetMapping("/download")
-    @UserLoginToken
+//    @UserLoginToken
     public ResponseMessage downloadFile(@RequestParam(value = "url") String url,
                                         HttpServletResponse response) throws IOException {
         return ResponseMessage.success(fileService.downloadFile(url,"E:\\毕设\\disk-code-backend\\src\\main\\resources\\static", response));
@@ -71,5 +72,17 @@ public class FileController {
     @UserLoginToken
     public ResponseMessage refactorFile(@RequestBody MyFile file) {
         return ResponseMessage.success(fileService.refactorFile(file));
+    }
+
+    @PostMapping("/recoverFiles")
+    @UserLoginToken
+    public ResponseMessage recoverFiles(@RequestBody List<Integer> ids) {
+        return ResponseMessage.success(fileService.recoverFiles(ids));
+    }
+
+    @PostMapping("/completelyDelete")
+    @UserLoginToken
+    public ResponseMessage completelyDelete(@RequestBody List<Integer> ids) {
+        return ResponseMessage.success(fileService.completelyDelete(ids));
     }
 }

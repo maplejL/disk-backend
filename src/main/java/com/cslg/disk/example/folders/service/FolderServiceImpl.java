@@ -36,4 +36,11 @@ public class FolderServiceImpl implements FolderService {
         List<Folder> all = folderDao.findAll();
         return all;
     }
+
+    @Override
+    public Object addFolder(String name) {
+        TencentCOSUtil tencentCOSUtil = new TencentCOSUtil();
+        Object o = tencentCOSUtil.addFolder(name);
+        return o;
+    }
 }
