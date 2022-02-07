@@ -43,4 +43,13 @@ public class FolderServiceImpl implements FolderService {
         Object o = tencentCOSUtil.addFolder(name);
         return o;
     }
+
+    @Override
+    public Object batchDelete(List<String> ids) {
+        if (ids.size()==0 || ids==null) {
+            return null;
+        }
+        Integer integer = folderDao.batchDelete(ids);
+        return integer>0;
+    }
 }

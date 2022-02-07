@@ -10,4 +10,6 @@ public interface FolderService {
     List<Folder> getFolders();
 
     Object addFolder(String name);
+
+    Object batchDelete(List<String> ids);
 }
