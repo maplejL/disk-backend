@@ -1,10 +1,8 @@
 package com.cslg.disk.example.redis;
 
+import com.cslg.disk.example.user.entity.MyUser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.ListOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +15,7 @@ public class RedisServiceImpl implements RedisService {
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
     private RedisTemplate redisTemplate;
+
     @Override
     public void setValue(String key, Map<String, Object> value) {
         ValueOperations<String, Object> vo = redisTemplate.opsForValue();
@@ -52,5 +51,17 @@ public class RedisServiceImpl implements RedisService {
         ValueOperations<String, Object> vo = redisTemplate.opsForValue();
         vo.set(key, value);
         redisTemplate.expire(key, 1, TimeUnit.HOURS); // 这里指的是1小时后失效
+        Object tokens = vo.get("tokens");
     }
+
+    public void setToken(MyUser user, String token) {
+        ValueOperations<String, Object> vo = redisTemplate.opsForValue();
+        vo.set("user:"+user.getId(), token);
+    }
+
+    @Override
+    public void deleteValue(String key) {
+        redisTemplate.delete(key);
+    }
+
 }

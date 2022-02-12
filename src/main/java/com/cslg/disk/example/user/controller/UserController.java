@@ -2,6 +2,7 @@ package com.cslg.disk.example.user.controller;
 
 import com.cslg.disk.common.exception.GlobalExceptionHandler;
 import com.cslg.disk.common.ResponseMessage;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.cslg.disk.example.user.anno.UserLoginToken;
 import com.cslg.disk.example.user.dto.LoginDto;
 import com.cslg.disk.example.user.dto.RegisterDto;
@@ -10,7 +11,6 @@ import com.cslg.disk.example.user.entity.MyUser;
 import com.cslg.disk.example.user.service.UserService;
 import com.cslg.disk.example.user.util.RSAUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -38,6 +38,11 @@ public class UserController extends GlobalExceptionHandler {
     public ResponseMessage login(@RequestBody LoginDto loginDto) {
         Map<String, Object> login = userService.login(loginDto);
         return ResponseMessage.isNul(login);
+    }
+
+    @PostMapping("/testLogin")
+    public String testLogin(@RequestBody LoginDto loginDto) {
+        return userService.testLogin(loginDto);
     }
 
     @PostMapping("/register")

@@ -74,6 +74,7 @@ public class TencentCOSUtil {
 
         String fileName = file.getOriginalFilename();
         try {
+            long startTime=System.currentTimeMillis();
             String substring = fileName.substring(fileName.lastIndexOf("."));
             File localFile = File.createTempFile(String.valueOf(System.currentTimeMillis()), substring);
             file.transferTo(localFile);
@@ -84,6 +85,8 @@ public class TencentCOSUtil {
             cosClient.putObject(objectRequest);
             GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, fileName);
             COSObject object = cosClient.getObject(getObjectRequest);
+            long endTime=System.currentTimeMillis();
+            System.out.println("程序运行时间： "+(endTime-startTime)+"ms");
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

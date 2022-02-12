@@ -1,30 +1,34 @@
 package com.cslg.disk.example.user.service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.cslg.disk.common.exception.BusinessException;
+import com.cslg.disk.example.chat.dao.TempChatDao;
+import com.cslg.disk.example.chat.entity.TempChat;
+import com.cslg.disk.example.chat.service.TempChatService;
 import com.cslg.disk.example.redis.RedisService;
+import com.cslg.disk.example.socket.WebSocket;
 import com.cslg.disk.example.user.dao.UserDao;
 import com.cslg.disk.example.user.dao.UserFriendDao;
 import com.cslg.disk.example.user.dto.LoginDto;
 import com.cslg.disk.example.user.dto.RegisterDto;
 import com.cslg.disk.example.user.dto.UpdatePwdDto;
 import com.cslg.disk.example.user.entity.MyUser;
-import com.cslg.disk.example.user.entity.UserRelation;
 import com.cslg.disk.example.user.util.RSAUtils;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.hibernate.id.UUIDGenerator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.UUIDEditor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 
 @Service
@@ -39,6 +43,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserFriendDao userFriendDao;
 
+    @Autowired
+    private TempChatDao tempChatDao;
+
+    @Autowired
+    private WebSocket webSocket;
+
     @Override
     public Map<String, Object> login(LoginDto loginDto) {
         if ("".equals(loginDto.getUsername()) || "".equals(loginDto.getPassword())) {
@@ -46,17 +56,38 @@ public class UserServiceImpl implements UserService {
         }
         MyUser userInfo = userDao.findByUserName(loginDto.getUsername());
         String password = Optional.ofNullable(userInfo).map(e -> e.getPassword()).orElse("");
+        if (loginDto.getStillLogin()) {
+            redisService.deleteValue("user:"+userInfo.getId());
+        }
         if (password.length() == 0) {
             throw new BusinessException("此用户不存在");
         } else {
             String md5Password = getMd5Password(loginDto.getPassword());
             if (md5Password.equals(password)) {
                 String token = getToken(userInfo);
+                if (redisService.getValue("user:"+userInfo.getId()) != null) {
+                    //前台拦截后判断是否继续登录，若继续登录，先清除redis记录，再调用login
+                    JSONArray jsonArray = new JSONArray();
+                    Map map = new HashMap();
+                    map.put("message", "您已在其他设备登录");
+                    map.put("username", userInfo.getUsername());
+                    map.put("password", loginDto.getPassword());
+                    jsonArray.add(map);
+                    throw new BusinessException(444,jsonArray.toString());
+                }
                 Map<String, Object> map = new HashMap<>();
                 map.put("token",(Object) token);
                 userInfo.setPassword("空");
                 map.put("userInfo", userInfo);
-                redisService.setValue("token", token);
+                redisService.setToken(userInfo, token);
+                Integer id = userInfo.getId();
+                List<TempChat> tempChats = tempChatDao.findTempChatsById(id);
+                if (tempChats.size()>0) {
+                    webSocket.sendOneMessage(userInfo.getId().toString(), "您有未读聊天!");
+                    Map<String, List<TempChat>> tempChatMap = new HashMap<>();
+                    tempChatMap.put("tempChat", tempChats);
+                    webSocket.sendOneObject(userInfo.getId().toString(), tempChatMap);
+                }
                 return map;
             }
             throw new BusinessException("用户密码不正确");
@@ -119,9 +150,20 @@ public class UserServiceImpl implements UserService {
         return users;
     }
 
+    @Override
+    public String testLogin(LoginDto loginDto) {
+        MyUser byUserName = userDao.findByUserName(loginDto.getUsername());
+        String token = getToken(byUserName);
+        redisService.setToken(byUserName, token);
+        return token;
+    }
+
     public String getToken(MyUser user) {
         String token="";
-        token= JWT.create().withAudience(String.valueOf(user.getId()))
+        token= JWT.create()
+                .withJWTId(UUID.randomUUID().toString())
+                .withIssuedAt(new Date())
+                .withAudience(String.valueOf(user.getId()))
                 .sign(Algorithm.HMAC256(user.getPassword()));
         return token;
     }

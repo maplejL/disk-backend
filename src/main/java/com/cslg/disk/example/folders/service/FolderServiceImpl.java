@@ -7,11 +7,13 @@ import com.cslg.disk.utils.TencentCOSUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 @Service
+@Transactional
 public class FolderServiceImpl implements FolderService {
     @Autowired
     private FolderDao folderDao;
@@ -51,5 +53,12 @@ public class FolderServiceImpl implements FolderService {
         }
         Integer integer = folderDao.batchDelete(ids);
         return integer>0;
+    }
+
+    @Override
+    public Object updateFolder(Folder folder) {
+        if (folder == null)
+            return null;
+        return folderDao.save(folder);
     }
 }

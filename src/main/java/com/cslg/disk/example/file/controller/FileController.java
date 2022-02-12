@@ -85,4 +85,17 @@ public class FileController {
     public ResponseMessage completelyDelete(@RequestBody List<Integer> ids) {
         return ResponseMessage.success(fileService.completelyDelete(ids));
     }
+
+    /**
+     * 预览word、xls、ppt文件
+     * @param url
+     * @return
+     */
+    @GetMapping("/preview")
+    @UserLoginToken
+    public void preview(@RequestParam("url")String url) {
+        fileService.previewFile(url);
+    }
+
+
 }

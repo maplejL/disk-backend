@@ -5,6 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cslg.disk.common.exception.BusinessException;
 import com.cslg.disk.example.redis.RedisService;
 import com.cslg.disk.example.user.anno.PassToken;
@@ -57,12 +58,13 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
                 if (token == null || token.equals("")) {
                     throw new BusinessException(401, "无token，请重新登录");
                 }
+                DecodedJWT decode = JWT.decode(token);
+                String userId = decode.getAudience().get(0);
                 //token30分钟过期
-                if (redisService.getValue("token") == null) {
+                if (redisService.getValue("user:"+userId) == null) {
                     throw new BusinessException(401, "token已失效，请重新登录");
                 }
                 // 获取 token 中的 user id
-                String userId;
                 try {
                     userId = JWT.decode(token).getAudience().get(0);
                 } catch (JWTDecodeException j) {

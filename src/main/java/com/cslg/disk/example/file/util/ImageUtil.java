@@ -22,6 +22,7 @@ public class ImageUtil {
      */
     public static String randomGrabberFFmpegImage(String filePath, String targerFilePath, String targetFileName)
             throws Exception {
+        long start = System.currentTimeMillis();
         System.out.println(filePath);
         FFmpegFrameGrabber ff = FFmpegFrameGrabber.createDefault(filePath);
         ff.start();
@@ -38,7 +39,8 @@ public class ImageUtil {
             }
             i++;
         }
-
+        long end = System.currentTimeMillis();
+        System.out.println("截取视频封面耗时:"+ (end-start)+ "ms");
         ff.stop();
         return path;
     }

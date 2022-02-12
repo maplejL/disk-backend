@@ -19,4 +19,6 @@ public interface UserService {
     Object updatePwd(UpdatePwdDto updatePwdDto);
 
     List<MyUser> getFriends(Integer id);
+
+    String testLogin(LoginDto loginDto);
 }

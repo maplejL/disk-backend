@@ -204,4 +204,13 @@ public class FileServiceImpl implements FileService  {
     public Boolean completelyDelete(List<Integer> ids) {
         return fileDao.completelyDelete(ids) > 0;
     }
+
+    @Override
+    public void previewFile(String url) {
+        try {
+            fileUtil.browse(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

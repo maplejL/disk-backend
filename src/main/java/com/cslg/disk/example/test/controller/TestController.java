@@ -1,19 +1,16 @@
 package com.cslg.disk.example.test.controller;
 
 
+import com.cslg.disk.example.chat.dao.TempChatDao;
+import com.cslg.disk.example.chat.entity.TempChat;
 import com.cslg.disk.example.log.SysLogAnno;
 import com.cslg.disk.example.redis.RedisService;
 import com.cslg.disk.example.socket.WebSocket;
 import com.cslg.disk.example.test.service.TestService;
-import com.qcloud.cos.model.ObjectListing;
 import io.swagger.annotations.Api;
-import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,12 +33,21 @@ public class TestController {
     @Autowired
     private WebSocket webSocket;
 
+    @Autowired
+    private TempChatDao tempChatDao;
+
     private String res;
 
     @SysLogAnno("测试")
-    @GetMapping("/get")
-    public String doGet(@RequestParam(value = "s")String s) {
-        return longestNiceSubstring(s);
+    @GetMapping("/get/{id}")
+    public String doGet(@PathVariable("id")String id) {
+        List<TempChat> tempChats = tempChatDao.findTempChatsById(Integer.valueOf(id));
+        if (tempChats.size()>0) {
+            for (TempChat tempChat : tempChats) {
+                webSocket.sendOneObject(id, tempChat);
+            }
+        }
+        return "";
     }
 
     @GetMapping("/testRedis")
@@ -67,7 +73,7 @@ public class TestController {
     @GetMapping("/link")
     public void Link(HttpServletRequest request, HttpServletResponse response) {
         try {
-            browse("https://www.baidu.com/");
+            browse("https://disk-1305749742.cos.ap-shanghai.myqcloud.com/mall/langs.xlsx");
 //            response.sendRedirect("https://www.baidu.com/");
         } catch (IOException e) {
             e.printStackTrace();
@@ -77,6 +83,7 @@ public class TestController {
     }
 
     private static void browse(String url) throws Exception {
+        url = "https://view.officeapps.live.com/op/view.aspx?src=" + url;
         //获取操作系统的名字
         String osName = System.getProperty("os.name", "");
 

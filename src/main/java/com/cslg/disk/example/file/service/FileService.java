@@ -30,4 +30,6 @@ public interface FileService {
     Boolean recoverFiles(List<Integer> ids);
 
     Boolean completelyDelete(List<Integer> ids);
+
+    void previewFile(String url);
 }

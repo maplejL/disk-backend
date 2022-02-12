@@ -1,8 +1,10 @@
 package com.cslg.disk.example.folders.controller;
 
 import com.cslg.disk.common.ResponseMessage;
+import com.cslg.disk.example.folders.entity.Folder;
 import com.cslg.disk.example.folders.service.FolderService;
 import com.cslg.disk.example.user.anno.UserLoginToken;
+import com.cslg.disk.example.user.entity.MyUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +29,14 @@ public class FolderController {
     }
 
     @GetMapping("/deleteFolder")
-    @UserLoginToken
+    @UserLoginToken()
     public ResponseMessage deleteFolder(@RequestParam("ids") List<String> ids) {
         return ResponseMessage.success(folderService.batchDelete(ids));
+    }
+
+    @PostMapping("/updateFolder")
+    @UserLoginToken
+    public ResponseMessage updateFolder(@RequestBody Folder folder) {
+        return ResponseMessage.success(folderService.updateFolder(folder));
     }
 }

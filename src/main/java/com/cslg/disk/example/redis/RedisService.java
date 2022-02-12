@@ -1,5 +1,7 @@
 package com.cslg.disk.example.redis;
 
+import com.cslg.disk.example.user.entity.MyUser;
+
 import java.util.List;
 import java.util.Map;
 
@@ -15,5 +17,9 @@ public interface RedisService {
     Object getValue(String key);
 
     List<String> getValueList(String key);
+
+    void setToken(MyUser user, String token);
+
+    void deleteValue(String key);
 }
 

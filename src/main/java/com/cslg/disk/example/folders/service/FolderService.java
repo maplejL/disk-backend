@@ -12,4 +12,6 @@ public interface FolderService {
     Object addFolder(String name);
 
     Object batchDelete(List<String> ids);
+
+    Object updateFolder(Folder folder);
 }
