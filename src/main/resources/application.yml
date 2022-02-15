@@ -2,10 +2,10 @@ spring:
     datasource:
         type: com.alibaba.druid.pool.DruidDataSource
         username: root
-        password: 123456
+        password: _000125Ljj
         driver-class-name: com.mysql.cj.jdbc.Driver
-#        url: jdbc:mysql://106.14.166.169:3306/disk?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
-        url: jdbc:mysql://127.0.0.1:3306/disk?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
+        url: jdbc:mysql://106.14.166.169:3306/disk?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
+#        url: jdbc:mysql://127.0.0.1:3306/disk?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
     jpa:
         hibernate:
             ddl-auto: update
