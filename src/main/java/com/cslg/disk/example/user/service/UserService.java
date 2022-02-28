@@ -6,11 +6,13 @@ import com.cslg.disk.example.user.dto.UpdatePwdDto;
 import com.cslg.disk.example.user.entity.MyUser;
 import com.cslg.disk.example.user.util.RSAUtils;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.websocket.Session;
 import java.util.List;
 import java.util.Map;
 
 public interface UserService {
-    Map<String, Object> login(LoginDto loginDto);
+    Map<String, Object> login(LoginDto loginDto, HttpServletRequest request);
 
     RSAUtils getKeys();
 
@@ -21,4 +23,8 @@ public interface UserService {
     List<MyUser> getFriends(Integer id);
 
     String testLogin(LoginDto loginDto);
+
+    Object logout(String id);
+
+    MyUser getUserById(String id);
 }

@@ -51,12 +51,12 @@ public class RedisServiceImpl implements RedisService {
         ValueOperations<String, Object> vo = redisTemplate.opsForValue();
         vo.set(key, value);
         redisTemplate.expire(key, 1, TimeUnit.HOURS); // 这里指的是1小时后失效
-        Object tokens = vo.get("tokens");
     }
 
     public void setToken(MyUser user, String token) {
         ValueOperations<String, Object> vo = redisTemplate.opsForValue();
         vo.set("user:"+user.getId(), token);
+        redisTemplate.expire("user:" + user.getId(),1, TimeUnit.HOURS);
     }
 
     @Override

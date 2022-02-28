@@ -1,17 +1,20 @@
 package com.cslg.disk.example.test.controller;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.cslg.disk.example.chat.dao.TempChatDao;
 import com.cslg.disk.example.chat.entity.TempChat;
 import com.cslg.disk.example.log.SysLogAnno;
 import com.cslg.disk.example.redis.RedisService;
 import com.cslg.disk.example.socket.WebSocket;
 import com.cslg.disk.example.test.service.TestService;
+import com.google.gson.JsonObject;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -39,15 +42,16 @@ public class TestController {
     private String res;
 
     @SysLogAnno("测试")
-    @GetMapping("/get/{id}")
-    public String doGet(@PathVariable("id")String id) {
-        List<TempChat> tempChats = tempChatDao.findTempChatsById(Integer.valueOf(id));
-        if (tempChats.size()>0) {
-            for (TempChat tempChat : tempChats) {
-                webSocket.sendOneObject(id, tempChat);
-            }
-        }
-        return "";
+    @GetMapping("/get")
+    public String doGet() {
+//        List<TempChat> tempChats = tempChatDao.findTempChatsById(Integer.valueOf(id));
+//        if (tempChats.size()>0) {
+//            for (TempChat tempChat : tempChats) {
+//                webSocket.sendOneObject(id, tempChat);
+//            }
+//        }
+
+        return "123";
     }
 
     @GetMapping("/testRedis")

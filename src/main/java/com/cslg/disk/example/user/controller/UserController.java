@@ -13,6 +13,8 @@ import com.cslg.disk.example.user.util.RSAUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.websocket.Session;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,9 +37,15 @@ public class UserController extends GlobalExceptionHandler {
 
     @PostMapping("/login")
     @ResponseBody
-    public ResponseMessage login(@RequestBody LoginDto loginDto) {
-        Map<String, Object> login = userService.login(loginDto);
+    public ResponseMessage login(@RequestBody LoginDto loginDto, HttpServletRequest request) {
+        Map<String, Object> login = userService.login(loginDto, request);
         return ResponseMessage.isNul(login);
+    }
+
+    @GetMapping("/logout")
+    @ResponseBody
+    public ResponseMessage logout(@RequestParam("id")String id) {
+        return ResponseMessage.success(userService.logout(id));
     }
 
     @PostMapping("/testLogin")

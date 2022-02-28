@@ -1,5 +1,6 @@
 package com.cslg.disk.example.user.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -25,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.UUIDEditor;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.websocket.Session;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -50,7 +53,7 @@ public class UserServiceImpl implements UserService {
     private WebSocket webSocket;
 
     @Override
-    public Map<String, Object> login(LoginDto loginDto) {
+    public Map<String, Object> login(LoginDto loginDto, HttpServletRequest request) {
         if ("".equals(loginDto.getUsername()) || "".equals(loginDto.getPassword())) {
             throw new BusinessException("用户名或密码为空");
         }
@@ -67,21 +70,19 @@ public class UserServiceImpl implements UserService {
                 String token = getToken(userInfo);
                 if (redisService.getValue("user:"+userInfo.getId()) != null) {
                     //前台拦截后判断是否继续登录，若继续登录，先清除redis记录，再调用login
-                    JSONArray jsonArray = new JSONArray();
                     Map map = new HashMap();
                     map.put("message", "您已在其他设备登录");
                     map.put("username", userInfo.getUsername());
                     map.put("password", loginDto.getPassword());
-                    jsonArray.add(map);
-                    throw new BusinessException(444,jsonArray.toString());
+                    throw new BusinessException(444, JSON.toJSONString(map));
                 }
                 Map<String, Object> map = new HashMap<>();
                 map.put("token",(Object) token);
                 userInfo.setPassword("空");
                 map.put("userInfo", userInfo);
                 redisService.setToken(userInfo, token);
-                Integer id = userInfo.getId();
-                List<TempChat> tempChats = tempChatDao.findTempChatsById(id);
+                redisService.setValue(userInfo.getId().toString(), request.getRemoteAddr());
+                List<TempChat> tempChats = tempChatDao.findTempChatsById(userInfo.getId());
                 if (tempChats.size()>0) {
                     webSocket.sendOneMessage(userInfo.getId().toString(), "您有未读聊天!");
                     Map<String, List<TempChat>> tempChatMap = new HashMap<>();
@@ -156,6 +157,18 @@ public class UserServiceImpl implements UserService {
         String token = getToken(byUserName);
         redisService.setToken(byUserName, token);
         return token;
+    }
+
+    @Override
+    public Object logout(String id) {
+        redisService.deleteValue("user:"+id);
+        log.info("用户"+id+"退出登录成功");
+        return true;
+    }
+
+    @Override
+    public MyUser getUserById(String id) {
+        return userDao.findById(id);
     }
 
     public String getToken(MyUser user) {

@@ -1,5 +1,6 @@
 package com.cslg.disk.common.exception;
 
+import com.alibaba.fastjson.JSON;
 import com.cslg.disk.common.IExceptionCode;
 
 public class BusinessException extends RuntimeException{
@@ -33,7 +34,7 @@ public class BusinessException extends RuntimeException{
 
     public BusinessException(Integer code, String message) {
         this.code = code;
-        this.message = message;
+        this.message = JSON.toJSONString(message);
     }
 
     public BusinessException(String message) {

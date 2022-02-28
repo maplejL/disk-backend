@@ -1,5 +1,7 @@
 package com.cslg.disk.common.exception;
 
+import com.alibaba.fastjson.JSON;
+import com.cslg.disk.common.ResponseMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -19,6 +21,6 @@ public class GlobalExceptionHandler extends Throwable {
             res.setStatus(500);
         }
         res.setStatus(exception.getCode());
-        return new SystemMessage(res.getStatus(), exception.getMessage());
+        return new SystemMessage(res.getStatus(), JSON.toJSONString(exception.getMessage())) ;
     }
 }

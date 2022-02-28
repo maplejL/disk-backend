@@ -1,17 +1,15 @@
 package com.cslg.disk.example.chat.service.impl;
 
-import com.cslg.disk.example.chat.entity.TempChat;
 import com.cslg.disk.example.chat.dao.TempChatDao;
+import com.cslg.disk.example.chat.entity.TempChat;
 import com.cslg.disk.example.chat.service.TempChatService;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
-import javax.annotation.Resource;
 import javax.transaction.Transactional;
 import java.util.List;
 
-import org.springframework.data.domain.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -27,12 +25,12 @@ public class TempChatServiceImpl implements TempChatService {
     private TempChatDao tempChatDao;
 
     @Override
-    public TempChat queryById(Integer id) {
+    public com.cslg.disk.example.chat.entity.TempChat queryById(Integer id) {
         return tempChatDao.getOne(id);
     }
 
     @Override
-    public List<TempChat> getall() {
+    public List<com.cslg.disk.example.chat.entity.TempChat> getall() {
         return tempChatDao.findAll();
 
     }
@@ -43,20 +41,20 @@ public class TempChatServiceImpl implements TempChatService {
     }
 
     @Override
-    public Page<TempChat> queryAllByLimit(int offset, int limit) {
+    public Page<com.cslg.disk.example.chat.entity.TempChat> queryAllByLimit(int offset, int limit) {
         return tempChatDao.findAll(PageRequest.of((offset - 1)
                 * limit, limit));
     }
 
     @Override
-    public TempChat insert(TempChat tempChat) {
+    public com.cslg.disk.example.chat.entity.TempChat insert(com.cslg.disk.example.chat.entity.TempChat tempChat) {
 
         return tempChatDao.save(tempChat);
     }
 
 
     @Override
-    public TempChat update(TempChat tempChat) {
+    public com.cslg.disk.example.chat.entity.TempChat update(com.cslg.disk.example.chat.entity.TempChat tempChat) {
 
         return tempChatDao.save(tempChat);
     }

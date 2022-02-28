@@ -1,12 +1,13 @@
 package com.cslg.disk.example.socket;
 
 import com.alibaba.fastjson.JSON;
+import com.cslg.disk.example.chat.dao.TempChatDao;
 import com.cslg.disk.example.chat.entity.TempChat;
-import com.cslg.disk.example.chat.service.TempChatService;
 import com.cslg.disk.example.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
@@ -14,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.Future;
 
 @Component
 @ServerEndpoint(value = "/websocket/{id}")
@@ -24,11 +24,21 @@ public class WebSocket {
     @Autowired
     private RedisService redisService;
 
+    @Autowired
+    private TempChatDao tempChatDao;
+
     private Session session;
 
     private static CopyOnWriteArraySet<WebSocket> webSockets = new CopyOnWriteArraySet<>();
     private static Map<String, Session> sessionPool = new HashMap<String, Session>();
 
+    public static WebSocket webSocket;
+
+    @PostConstruct
+    public void init() {
+        webSocket = this;
+        webSocket.tempChatDao = this.tempChatDao;
+    }
 
     @OnOpen
     public void onOpen(Session session, @PathParam(value = "id") String id) {
@@ -38,14 +48,13 @@ public class WebSocket {
         this.session = session;
         webSockets.add(this);
         sessionPool.put(id, session);
-//        List<String> ids = new ArrayList<>();
-//        if (redisService.getValueList("userId") != null) {
-//            ids = redisService.getValueList("userId");
-//        }
-//        Map<String, List<String>> map = new HashMap<>();
-//        ids.add(id);
-//        map.put("userId", ids);
-//        redisService.setValue("userId", map);
+        List<TempChat> tempChats = webSocket.tempChatDao.findTempChatsById(Integer.valueOf(id));
+        if (tempChats.size()>0) {
+            sendOneObject(id, "您有未读聊天!");
+            Map<String, List<TempChat>> tempChatMap = new HashMap<>();
+            tempChatMap.put("tempChat", tempChats);
+            sendOneObject(id, tempChatMap);
+        }
         System.out.println("【websocket消息】有新的连接，总数为:" + webSockets.size());
     }
 
@@ -99,6 +108,14 @@ public class WebSocket {
                 e.printStackTrace();
             }
         }
+    }
+
+    public Integer isOnLine(String id) {
+        Session session = sessionPool.get(id);
+        if (session != null) {
+            return 1;
+        }
+        return 0;
     }
 
 }

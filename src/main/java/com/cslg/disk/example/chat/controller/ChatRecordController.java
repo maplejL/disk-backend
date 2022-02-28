@@ -49,6 +49,11 @@ public class ChatRecordController {
         return ResponseMessage.success(chatRecordService.deleteTempChat(ids));
     }
 
+    @GetMapping("/getChatRecord")
+    @UserLoginToken
+    public ResponseMessage getChatRecordByConversationId(@RequestParam("id") String id) {
+        return ResponseMessage.success(chatRecordService.getChatRecordByConversationId(id));
+    }
 }
 
 

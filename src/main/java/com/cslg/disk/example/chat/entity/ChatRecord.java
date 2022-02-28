@@ -4,6 +4,7 @@ import com.cslg.disk.common.BaseEntity;
 import lombok.Data;
 
 import javax.persistence.Entity;
+import javax.persistence.Transient;
 import java.util.Date;
 import java.io.Serializable;
 
@@ -23,5 +24,7 @@ public class ChatRecord extends BaseEntity implements Serializable {
     private Integer conversationId;
 
     private Integer sendUser;
+
+    private String sendUserName;
 }
 

@@ -1,5 +1,6 @@
 package com.cslg.disk.example.user.util;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 
@@ -124,7 +125,7 @@ public class RSAUtils {
             return new String(rsaSplitCodec(cipher, Cipher.DECRYPT_MODE, data, privateKey.getModulus().bitLength()),
                     CHARSET);
         } catch (Exception e) {
-            throw new RuntimeException("加密字符串时遇到异常,请刷新页面", e);
+            throw new RuntimeException(JSON.toJSONString("加密字符串时遇到异常,请刷新页面"), e);
         }
     }
 

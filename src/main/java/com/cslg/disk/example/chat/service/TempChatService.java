@@ -1,9 +1,8 @@
 package com.cslg.disk.example.chat.service;
 
-import com.cslg.disk.example.chat.entity.TempChat;
-
 import java.util.List;
 
+import com.cslg.disk.example.chat.entity.TempChat;
 import org.springframework.data.domain.Page;
 
 /**
@@ -13,17 +12,17 @@ import org.springframework.data.domain.Page;
  * @since 2022-02-08 15:54:58
  */
 public interface TempChatService {
-    TempChat queryById(Integer id);
+    com.cslg.disk.example.chat.entity.TempChat queryById(Integer id);
 
-    Page<TempChat> queryAllByLimit(int offset, int limit);
+    Page<com.cslg.disk.example.chat.entity.TempChat> queryAllByLimit(int offset, int limit);
 
-    TempChat insert(TempChat tempChat);
+    com.cslg.disk.example.chat.entity.TempChat insert(com.cslg.disk.example.chat.entity.TempChat tempChat);
 
-    TempChat update(TempChat tempChat);
+    com.cslg.disk.example.chat.entity.TempChat update(com.cslg.disk.example.chat.entity.TempChat tempChat);
 
     boolean deleteById(Integer id);
 
-    List<TempChat> getall();
+    List<com.cslg.disk.example.chat.entity.TempChat> getall();
 
     List<TempChat> getallById(Integer id);
 

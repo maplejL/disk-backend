@@ -26,9 +26,11 @@ public interface ChatRecordService {
 
     List<ChatRecord> getall();
 
-    Object sendMessage(ChatDto chatDto);
+    ChatRecord sendMessage(ChatDto chatDto);
 
     Object deleteTempChat(List<Integer> ids);
+
+    List<ChatRecord> getChatRecordByConversationId(String id);
 }
 
 

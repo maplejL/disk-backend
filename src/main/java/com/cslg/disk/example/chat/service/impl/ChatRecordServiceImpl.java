@@ -9,12 +9,12 @@ import com.cslg.disk.example.chat.entity.TempChat;
 import com.cslg.disk.example.chat.service.ChatRecordService;
 import com.cslg.disk.example.chat.service.ConversationService;
 import com.cslg.disk.example.socket.WebSocket;
+import com.cslg.disk.example.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +45,9 @@ public class ChatRecordServiceImpl implements ChatRecordService {
     private ConversationService conversationService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private WebSocket socket;
 
     @Autowired
@@ -62,17 +65,20 @@ public class ChatRecordServiceImpl implements ChatRecordService {
     }
 
     @Override
-    public Object sendMessage(ChatDto chatDto) {
+    public ChatRecord sendMessage(ChatDto chatDto) {
         Integer conversationId = chatDto.getConversationId();
         Conversation conversation = conversationService.queryById(conversationId);
         List<String> ids = Arrays.stream(conversation.getUserIds().split(",")).filter(e -> !e.equals(chatDto.getUserId()))
                 .collect(Collectors.toList());
         StringBuilder offLineUserIds = new StringBuilder();
+        List<String> onLineUserIds = new ArrayList<>();
         for (String id : ids) {
             //判断是否在线，不在线保存到待推送消息
-            Integer isOffLine = socket.sendOneMessage(id, chatDto.getContent());
+            Integer isOffLine = socket.isOnLine(id);
             if (isOffLine == 0) {
                 offLineUserIds.append(id).append(",");
+            } else {
+                onLineUserIds.add(id);
             }
         }
         offLineUserIds.delete(offLineUserIds.length()-1, offLineUserIds.length());
@@ -81,19 +87,34 @@ public class ChatRecordServiceImpl implements ChatRecordService {
             tempChat.setContent(chatDto.getContent());
             tempChat.setOffLineUserIds(offLineUserIds.toString());
             tempChat.setConversationId(conversationId);
+            tempChat.setConversationName(conversation.getConversationName());
             tempChatDao.save(tempChat);
         }
         ChatRecord chatRecord = new ChatRecord();
         chatRecord.setSendUser(chatDto.getUserId());
         chatRecord.setContent(chatDto.getContent());
         chatRecord.setConversationId(conversationId);
-        insert(chatRecord);
-        return true;
+        chatRecord.setSendUserName(userService.getUserById(chatDto.getUserId().toString()).getUsername());
+        chatRecord = insert(chatRecord);
+        Map<String, List<ChatRecord>> map = new HashMap<>();
+        List<ChatRecord> list = new ArrayList<>();
+        list.add(chatRecord);
+        map.put("newChatRecord", list);
+        for (String onLineUserId : onLineUserIds) {
+            socket.sendOneObject(onLineUserId, map);
+        }
+        return chatRecord;
     }
 
     @Override
     public Object deleteTempChat(List<Integer> ids) {
         return tempChatDao.delete(ids)>0;
+    }
+
+    @Override
+    public List<ChatRecord> getChatRecordByConversationId(String id) {
+        List<ChatRecord> byConversationId = chatRecordDao.findByConversationId(id);
+        return byConversationId;
     }
 
     @Override
