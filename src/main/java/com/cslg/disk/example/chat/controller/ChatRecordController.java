@@ -45,8 +45,8 @@ public class ChatRecordController {
 
     @GetMapping("/deleteTempChat")
     @UserLoginToken
-    public ResponseMessage deleteTempChat(@RequestParam("ids")List<Integer> ids) {
-        return ResponseMessage.success(chatRecordService.deleteTempChat(ids));
+    public ResponseMessage deleteTempChat(@RequestParam("id")Integer id ,@RequestParam("userId") Integer userId) {
+        return ResponseMessage.success(chatRecordService.deleteTempChat(id,userId));
     }
 
     @GetMapping("/getChatRecord")

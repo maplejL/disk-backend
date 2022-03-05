@@ -1,5 +1,6 @@
 package com.cslg.disk.example.chat.dto;
 
+import com.cslg.disk.example.user.entity.UserAvater;
 import lombok.Data;
 
 @Data

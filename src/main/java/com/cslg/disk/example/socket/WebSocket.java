@@ -92,7 +92,6 @@ public class WebSocket {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
         return 0;
     }
@@ -103,7 +102,9 @@ public class WebSocket {
         if (session != null) {
             try {
                 String s = JSON.toJSONString(o);
-                session.getAsyncRemote().sendText(s);
+                synchronized (session) {
+                    session.getBasicRemote().sendText(s);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -118,4 +119,7 @@ public class WebSocket {
         return 0;
     }
 
+    public void logout(String id) {
+        this.sessionPool.remove(id);
+    }
 }

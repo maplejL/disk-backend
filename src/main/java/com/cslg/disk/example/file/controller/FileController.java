@@ -51,15 +51,25 @@ public class FileController {
     @UserLoginToken
     public ResponseMessage uploadFile( @RequestParam(value = "file") MultipartFile file,
                                       @RequestParam(value = "typeCode") int typeCode,
+                                      @RequestParam(value = "userId") Integer userId,
                                       @RequestParam(value = "targetFilePath") String targetFilePath) {
         return ResponseMessage.success(fileService.uploadFile(file, typeCode, targetFilePath));
     }
 
+    @PostMapping("/uploadAvater")
+    @UserLoginToken
+    public ResponseMessage uploadAvater( @RequestParam(value = "file") MultipartFile file,
+                                       @RequestParam(value = "userId" ) String userId,
+                                       @RequestParam(value = "targetFilePath") String targetFilePath) {
+        return ResponseMessage.success(fileService.uploadAvater(userId, file, targetFilePath));
+    }
+
+
     @GetMapping("/download")
 //    @UserLoginToken
-    public ResponseMessage downloadFile(@RequestParam(value = "url") String url,
+    public ResponseMessage downloadFile(@RequestParam(value = "id") String id,
                                         HttpServletResponse response) throws IOException {
-        return ResponseMessage.success(fileService.downloadFile(url,"E:\\毕设\\disk-code-backend\\src\\main\\resources\\static", response));
+        return ResponseMessage.success(fileService.downloadFile(id,"E:\\毕设\\disk-code-backend\\src\\main\\resources\\static", response));
     }
 
     @DeleteMapping("/deleteFile")
@@ -97,5 +107,16 @@ public class FileController {
         fileService.previewFile(url);
     }
 
+    @GetMapping("/getFileTree")
+    @UserLoginToken
+    public ResponseMessage getFileTree(@RequestParam("userId") Integer userId) {
+        return ResponseMessage.success(fileService.getFileTree(userId));
+    }
+
+//    @PostMapping("/search")
+//    @UserLoginToken
+//    public ResponseMessage search(@RequestBody SearchPageDto searchPageDto) {
+//        return ResponseMessage.success(fileService.search)
+//    }
 
 }

@@ -8,6 +8,9 @@ import com.cslg.disk.example.log.SysLogAnno;
 import com.cslg.disk.example.redis.RedisService;
 import com.cslg.disk.example.socket.WebSocket;
 import com.cslg.disk.example.test.service.TestService;
+import com.cslg.disk.example.user.controller.UserController;
+import com.cslg.disk.example.user.service.UserService;
+import com.cslg.disk.example.user.service.UserServiceImpl;
 import com.google.gson.JsonObject;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
@@ -39,17 +42,17 @@ public class TestController {
     @Autowired
     private TempChatDao tempChatDao;
 
+    @Autowired
+    private UserService userService;
+
     private String res;
 
     @SysLogAnno("测试")
     @GetMapping("/get")
     public String doGet() {
-//        List<TempChat> tempChats = tempChatDao.findTempChatsById(Integer.valueOf(id));
-//        if (tempChats.size()>0) {
-//            for (TempChat tempChat : tempChats) {
-//                webSocket.sendOneObject(id, tempChat);
-//            }
-//        }
+        String s = "WB0Z8jqwJlYD+ZCjm3HPDv9AVgmtj5I5pCuKtEykRWLkblaz2W1JUt1h2gw4c4A++SnM/q9bKSRUFz/zmS/pvA==";
+        UserServiceImpl service = new UserServiceImpl();
+        String md5Password = service.getMd5Password(s);
 
         return "123";
     }

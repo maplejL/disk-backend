@@ -21,4 +21,6 @@ public class MyFile extends BaseEntity {
     private String typeName;
 
     private static Boolean isHover = false;
+
+    private Integer userId;
 }

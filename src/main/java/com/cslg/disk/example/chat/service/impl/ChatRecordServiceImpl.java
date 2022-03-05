@@ -9,6 +9,8 @@ import com.cslg.disk.example.chat.entity.TempChat;
 import com.cslg.disk.example.chat.service.ChatRecordService;
 import com.cslg.disk.example.chat.service.ConversationService;
 import com.cslg.disk.example.socket.WebSocket;
+import com.cslg.disk.example.user.dao.UserAvaterDao;
+import com.cslg.disk.example.user.entity.UserAvater;
 import com.cslg.disk.example.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -40,6 +43,9 @@ import javax.transaction.Transactional;
 public class ChatRecordServiceImpl implements ChatRecordService {
     @Autowired
     private ChatRecordDao chatRecordDao;
+
+    @Autowired
+    private UserAvaterDao userAvaterDao;
 
     @Autowired
     private ConversationService conversationService;
@@ -95,6 +101,8 @@ public class ChatRecordServiceImpl implements ChatRecordService {
         chatRecord.setContent(chatDto.getContent());
         chatRecord.setConversationId(conversationId);
         chatRecord.setSendUserName(userService.getUserById(chatDto.getUserId().toString()).getUsername());
+        UserAvater avater = userAvaterDao.findByUserId(chatDto.getUserId());
+        chatRecord.setAvater(avater);
         chatRecord = insert(chatRecord);
         Map<String, List<ChatRecord>> map = new HashMap<>();
         List<ChatRecord> list = new ArrayList<>();
@@ -107,13 +115,44 @@ public class ChatRecordServiceImpl implements ChatRecordService {
     }
 
     @Override
-    public Object deleteTempChat(List<Integer> ids) {
-        return tempChatDao.delete(ids)>0;
+    public Object deleteTempChat(Integer id, Integer userId) {
+        TempChat one = tempChatDao.getOne(id);
+        String offLineUserIds = one.getOffLineUserIds();
+        String[] split = offLineUserIds.split(",");
+        StringBuilder builder = new StringBuilder();
+        for (String s : split) {
+            if (!s.equals(userId.toString())) {
+                builder.append(s).append(",");
+            }
+        }
+        builder.toString().replaceAll(" ", "");
+        builder.replace(builder.length()-1, builder.length(), "");
+        one.setOffLineUserIds(builder.toString());
+        TempChat save = tempChatDao.save(one);
+
+        return save;
     }
 
     @Override
     public List<ChatRecord> getChatRecordByConversationId(String id) {
         List<ChatRecord> byConversationId = chatRecordDao.findByConversationId(id);
+        if (byConversationId == null || byConversationId.size() == 0) {
+            return null;
+        }
+        List<Integer> userIds = byConversationId.stream().map(e -> e.getSendUser()).collect(Collectors.toList());
+        List<UserAvater> avaters = userAvaterDao.findByUserIds(userIds);
+        List<Integer> haveAvaterUserIds = avaters.stream().map(e -> e.getUserId()).collect(Collectors.toList());
+        byConversationId.stream().forEach(e -> {
+            UserAvater avater;
+            if (!haveAvaterUserIds.contains(e.getSendUser())){
+                avater = new UserAvater();
+                avater.setUrl("static/image/img.png");
+                e.setAvater(avater);
+            } else {
+                avater = avaters.get(haveAvaterUserIds.indexOf(e.getSendUser()));
+            }
+            e.setAvater(avater);
+        });
         return byConversationId;
     }
 

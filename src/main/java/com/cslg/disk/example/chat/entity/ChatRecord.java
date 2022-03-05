@@ -1,6 +1,7 @@
 package com.cslg.disk.example.chat.entity;
 
 import com.cslg.disk.common.BaseEntity;
+import com.cslg.disk.example.user.entity.UserAvater;
 import lombok.Data;
 
 import javax.persistence.Entity;
@@ -26,5 +27,8 @@ public class ChatRecord extends BaseEntity implements Serializable {
     private Integer sendUser;
 
     private String sendUserName;
+
+    @Transient
+    private UserAvater avater;
 }
 

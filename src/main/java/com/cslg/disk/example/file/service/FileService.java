@@ -2,6 +2,7 @@ package com.cslg.disk.example.file.service;
 
 import com.cslg.disk.example.file.dto.SearchPageDto;
 import com.cslg.disk.example.file.entity.MyFile;
+import com.cslg.disk.example.user.entity.UserAvater;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -32,4 +33,8 @@ public interface FileService {
     Boolean completelyDelete(List<Integer> ids);
 
     void previewFile(String url);
+
+    UserAvater uploadAvater(String userId, MultipartFile file, String targetFilePath);
+
+    Map<String, List<MyFile>> getFileTree(Integer userId);
 }

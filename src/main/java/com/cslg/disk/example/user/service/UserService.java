@@ -7,7 +7,6 @@ import com.cslg.disk.example.user.entity.MyUser;
 import com.cslg.disk.example.user.util.RSAUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.websocket.Session;
 import java.util.List;
 import java.util.Map;
 
@@ -27,4 +26,6 @@ public interface UserService {
     Object logout(String id);
 
     MyUser getUserById(String id);
+
+    MyUser refactor(MyUser user);
 }

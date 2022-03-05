@@ -1,37 +1,35 @@
 package com.cslg.disk.example.user.service;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.cslg.disk.common.exception.BusinessException;
 import com.cslg.disk.example.chat.dao.TempChatDao;
 import com.cslg.disk.example.chat.entity.TempChat;
-import com.cslg.disk.example.chat.service.TempChatService;
 import com.cslg.disk.example.redis.RedisService;
 import com.cslg.disk.example.socket.WebSocket;
+import com.cslg.disk.example.user.dao.UserAvaterDao;
 import com.cslg.disk.example.user.dao.UserDao;
 import com.cslg.disk.example.user.dao.UserFriendDao;
 import com.cslg.disk.example.user.dto.LoginDto;
 import com.cslg.disk.example.user.dto.RegisterDto;
 import com.cslg.disk.example.user.dto.UpdatePwdDto;
 import com.cslg.disk.example.user.entity.MyUser;
+import com.cslg.disk.example.user.entity.UserAvater;
 import com.cslg.disk.example.user.util.RSAUtils;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.hibernate.id.UUIDGenerator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.propertyeditors.UUIDEditor;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.websocket.Session;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Service
@@ -42,6 +40,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RedisService redisService;
+
+    @Autowired
+    private UserAvaterDao userAvaterDao;
 
     @Autowired
     private UserFriendDao userFriendDao;
@@ -80,11 +81,21 @@ public class UserServiceImpl implements UserService {
                 map.put("token",(Object) token);
                 userInfo.setPassword("空");
                 map.put("userInfo", userInfo);
+                UserAvater avater = userAvaterDao.findByUserId(userInfo.getId());
+                if (avater == null) {
+                    if (userInfo.getSex() == null) {
+                        //未选择性别，默认男头像
+                        avater = userAvaterDao.findByUserId(0);
+                    }else {
+                        avater = userAvaterDao.findByUserId(userInfo.getSex() == 0 ? 0 : -1);
+                    }
+                }
+                map.put("avater", avater);
                 redisService.setToken(userInfo, token);
                 redisService.setValue(userInfo.getId().toString(), request.getRemoteAddr());
                 List<TempChat> tempChats = tempChatDao.findTempChatsById(userInfo.getId());
                 if (tempChats.size()>0) {
-                    webSocket.sendOneMessage(userInfo.getId().toString(), "您有未读聊天!");
+                    webSocket.sendOneObject(userInfo.getId().toString(), "您有未读聊天!");
                     Map<String, List<TempChat>> tempChatMap = new HashMap<>();
                     tempChatMap.put("tempChat", tempChats);
                     webSocket.sendOneObject(userInfo.getId().toString(), tempChatMap);
@@ -101,8 +112,16 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
-    private String getMd5Password(String password) {
+    public String getMd5Password(String password) {
         String realPass = RSAUtils.privateDecrypt(Base64.decodeBase64(password), RSAUtils.privateKeya);
+        //必须包含大小写字母和数字的组合，不能使用特殊字符，长度在 8-10 之间
+        String patternUserName = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{8,10}$";
+        Pattern r = Pattern.compile(patternUserName);
+        Matcher m = r.matcher(realPass);
+        System.out.println(m.matches());
+        if (m.matches() == false) {
+            throw new BusinessException("密码必须包含大小写字母和数字的组合，不能使用特殊字符，长度在 8-10 之间");
+        }
         MessageDigest md = null;
         try {
             md = MessageDigest.getInstance("MD5");
@@ -118,12 +137,32 @@ public class UserServiceImpl implements UserService {
         if (registerDto == null) {
             throw new BusinessException("无注册信息");
         }
+        if (registerDto.getEmail() != null || !"".equals(registerDto.getEmail())) {
+            String patternEmail = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$";
+            Pattern r = Pattern.compile(patternEmail);
+            Matcher m = r.matcher(registerDto.getEmail());
+            System.out.println(m.matches());
+            if (m.matches() == false) {
+                throw new BusinessException("邮箱地址不合法, 如(xxxxxxxxxxx@qq.com)");
+            }
+        }
+        if (registerDto.getUsername() != null || !"".equals(registerDto.getUsername())) {
+            //字母开头，允许5-16字节，允许字母数字下划线
+            String patternUserName = "^[a-zA-Z][a-zA-Z0-9_]{4,15}$";
+            Pattern r = Pattern.compile(patternUserName);
+            Matcher m = r.matcher(registerDto.getUsername());
+            if (m.matches() == false) {
+                throw new BusinessException("用户名应以字母开头,允许5-16字节,允许字母数字下划线");
+            }
+        }
         MyUser byUserName = userDao.findByUserName(registerDto.getUsername());
         if (byUserName != null) {
             throw new BusinessException("该用户名已存在");
         }
         MyUser myUser = new MyUser();
-        registerDto.setPassword(getMd5Password(registerDto.getPassword()));
+        if (registerDto.getPassword() != null) {
+            registerDto.setPassword(getMd5Password(registerDto.getPassword()));
+        }
         BeanUtils.copyProperties(registerDto, myUser);
         MyUser save = userDao.save(myUser);
         return save;
@@ -162,6 +201,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Object logout(String id) {
         redisService.deleteValue("user:"+id);
+        webSocket.logout(id);
         log.info("用户"+id+"退出登录成功");
         return true;
     }
@@ -169,6 +209,25 @@ public class UserServiceImpl implements UserService {
     @Override
     public MyUser getUserById(String id) {
         return userDao.findById(id);
+    }
+
+    @Override
+    public MyUser refactor(MyUser user) {
+        if (user.getUsername().length() > 8) {
+            throw new BusinessException("用户名长度区间为8位以内");
+        }
+        MyUser byId = userDao.findById(user.getId().toString());
+        user.setPassword(byId.getPassword());
+        if (byId != null) {
+            BeanUtils.copyProperties(user, byId);
+        }
+        MyUser save = userDao.save(byId);
+        UserAvater avater = userAvaterDao.findByUserId(save.getId());
+        save.setAvaterId(avater.getId());
+        save.setAvaterType(avater.getTypeName());
+        save.setAvaterUrl(avater.getUrl());
+        return save;
+
     }
 
     public String getToken(MyUser user) {

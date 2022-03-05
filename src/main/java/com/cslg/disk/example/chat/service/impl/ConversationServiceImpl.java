@@ -4,12 +4,16 @@ import com.cslg.disk.example.chat.dto.ConversationDto;
 import com.cslg.disk.example.chat.entity.Conversation;
 import com.cslg.disk.example.chat.dao.ConversationDao;
 import com.cslg.disk.example.chat.service.ConversationService;
+import com.cslg.disk.example.user.dao.UserAvaterDao;
+import com.cslg.disk.example.user.entity.UserAvater;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,6 +28,9 @@ public class ConversationServiceImpl implements ConversationService {
     @Resource
     private ConversationDao conversationDao;
 
+    @Autowired
+    private UserAvaterDao userAvaterDao;
+
     @Override
     public Conversation queryById(Integer id) {
         return conversationDao.getOne(id);
@@ -37,6 +44,15 @@ public class ConversationServiceImpl implements ConversationService {
     @Override
     public List<Conversation> getallById(Integer id) {
         List<Conversation> conversations = conversationDao.getallById(id);
+        for (Conversation conversation : conversations) {
+            String[] userIds = conversation.getUserIds().split(",");
+            List<UserAvater> avaters = new ArrayList<>();
+            for (int i = 0; i < userIds.length; i++) {
+                UserAvater avater = userAvaterDao.findByUserId(Integer.valueOf(userIds[i]));
+                avaters.add(avater);
+            }
+            conversation.setUserAvaters(avaters);
+        }
         return conversations;
     }
 

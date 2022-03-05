@@ -4,6 +4,7 @@ import com.cslg.disk.common.BaseEntity;
 import lombok.Data;
 
 import javax.persistence.Entity;
+import javax.persistence.Transient;
 
 @Entity
 @Data
@@ -22,5 +23,14 @@ public class MyUser extends BaseEntity{
     private String phone;
 
     private String address;
+
+    @Transient
+    private Integer avaterId;
+
+    @Transient
+    private String avaterType;
+
+    @Transient
+    private String avaterUrl;
 
 }

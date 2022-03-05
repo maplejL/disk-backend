@@ -9,6 +9,8 @@ import com.cslg.disk.example.file.dao.FileDao;
 import com.cslg.disk.example.file.util.FileUtil;
 import com.cslg.disk.example.file.util.ImageUtil;
 import com.cslg.disk.example.file.util.MutiThreadDownLoad;
+import com.cslg.disk.example.user.dao.UserAvaterDao;
+import com.cslg.disk.example.user.entity.UserAvater;
 import com.cslg.disk.utils.TencentCOSUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,12 +23,16 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class FileServiceImpl implements FileService  {
     @Autowired
     private FileDao fileDao;
+
+    @Autowired
+    private UserAvaterDao userAvaterDao;
 
     @Autowired
     private ThumbnailDao thumbnailDao;
@@ -36,15 +42,27 @@ public class FileServiceImpl implements FileService  {
 
     private static Map<Integer, List<String>> typeAndCode = new HashMap<>();
 
+    private static Map<Integer, String> typeAndName = new HashMap<>();
+
     static {
         List<String> type1 = new ArrayList<>();
+        List<String> type2 = new ArrayList<>();
+        List<String> type3 = new ArrayList<>();
         List<String> type4 = new ArrayList<>();
         type1.add("mp4");
         type4.add("jpg");
         type4.add("png");
         type4.add("jpeg");
-        typeAndCode.put(1,type1);
-        typeAndCode.put(4,type4);
+        type2.add("xlsx");
+        type3.add("mp3");
+        typeAndCode.put(1, type1);
+        typeAndCode.put(2, type2);
+        typeAndCode.put(3, type3);
+        typeAndCode.put(4, type4);
+        typeAndName.put(1, "视频");
+        typeAndName.put(2, "文档");
+        typeAndName.put(3, "音乐");
+        typeAndName.put(4, "图片");
     }
 
     @Override
@@ -52,9 +70,14 @@ public class FileServiceImpl implements FileService  {
         int pageSize = searchPageDto.getPageSize();
         int typeCode = searchPageDto.getTypeCode();
         int pageNo = searchPageDto.getPageNo();
-
+        String input = searchPageDto.getInput();
         int start = pageNo * pageSize;
-        List<MyFile> myFileList = fileDao.findByPage(start, pageSize, typeCode);
+        List<MyFile> myFileList = new ArrayList<>();
+        if (input == null) {
+            myFileList = fileDao.findByPage(start, pageSize, typeCode, searchPageDto.getUserId());
+        } else {
+            myFileList = fileDao.findByPageWithInput(start, pageSize, typeCode, input, searchPageDto.getUserId());
+        }
         if (typeCode == 1) {
             myFileList.forEach(item -> {
                 String thumbnailName = thumbnailDao.findByVideoUrl(item.getUrl());
@@ -62,7 +85,12 @@ public class FileServiceImpl implements FileService  {
             });
         }
         Map<String, Object> map = new HashMap<>();
-        map.put("total", fileDao.findAll().stream().filter(e -> e.getTypeCode() == typeCode).count());
+        Integer total;
+        if (input != null) {
+            map.put("total", fileDao.findTotalWithInput(typeCode, input, searchPageDto.getUserId()));
+        } else {
+            map.put("total", fileDao.findTotal(typeCode, searchPageDto.getUserId()));
+        }
         map.put("files", myFileList);
         return map;
     }
@@ -90,9 +118,10 @@ public class FileServiceImpl implements FileService  {
         uploadMyFile.setSize(fileSize);
         uploadMyFile.setUrl(uploadFilePath);
         uploadMyFile.setTypeCode(typeCode);
+        uploadMyFile.setTypeName(type);
         String contentType = file.getContentType();
         String[] split = contentType.split("/");
-        uploadMyFile.setTypeName(split[1]);
+//        uploadMyFile.setTypeName(split[1]);
 
         if (typeCode == 1) {
             ImageUtil imageUtil = new ImageUtil();
@@ -115,6 +144,43 @@ public class FileServiceImpl implements FileService  {
         return fileDao.save(uploadMyFile);
     }
 
+    @Override
+    public UserAvater uploadAvater(String userId, MultipartFile file, String targetFilePath) {
+        if (file == null) {
+            return null;
+        }
+        String type = (file.getOriginalFilename().split("\\."))[1];
+        String uploadFilePath = TencentCOSUtil.uploadfile(file);
+        long size = file.getSize();
+        String fileSize = fileUtil.getSize(size);
+
+        //已存在则覆盖
+        UserAvater avater = userAvaterDao.findByUserId(Integer.valueOf(userId));
+        if (avater == null) {
+            avater = new UserAvater();
+        }
+
+        avater.setFileName(file.getOriginalFilename());
+        avater.setUrl(uploadFilePath);
+        avater.setTypeName(type);
+        avater.setUserId(Integer.valueOf(userId));
+
+        return userAvaterDao.save(avater);
+    }
+
+    @Override
+    public Map<String, List<MyFile>> getFileTree(Integer userId) {
+        List<MyFile> allFiles = fileDao.findByUserId(userId);
+        Map<Integer, List<MyFile>> collect = allFiles.stream().collect(Collectors.groupingBy(MyFile::getTypeCode));
+        Set<Integer> keys = collect.keySet();
+        Map<String, List<MyFile>> result = new HashMap<>();
+        for (Integer key : keys) {
+            List<MyFile> myFiles = collect.get(key);
+            result.put(typeAndName.get(key), myFiles);
+        }
+        return result;
+    }
+
     /**
      * 从输入流中获取字节数组
      *
@@ -134,10 +200,12 @@ public class FileServiceImpl implements FileService  {
     }
 
     @Override
-    public Object downloadFile(String urlStr,String savePath, HttpServletResponse res) throws IOException {
+    public Object downloadFile(String id,String savePath, HttpServletResponse res) throws IOException {
+        MyFile one = fileDao.getOne(Integer.valueOf(id));
+        String urlStr = one.getUrl();
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        String filename = (new File(urlStr)).getName();
+        String filename = one.getFileName();
         savePath = savePath+"\\"+filename;
         Integer threadSize = 100;
         CountDownLatch latch = new CountDownLatch(threadSize);
@@ -213,4 +281,5 @@ public class FileServiceImpl implements FileService  {
             e.printStackTrace();
         }
     }
+
 }

@@ -81,4 +81,10 @@ public class UserController extends GlobalExceptionHandler {
     public ResponseMessage getFriends(@RequestParam(value = "id")Integer id) {
         return ResponseMessage.success(userService.getFriends(id));
     }
+
+    @PostMapping("/refactor")
+    @UserLoginToken
+    public ResponseMessage refactor(@RequestBody MyUser user) {
+        return ResponseMessage.success(userService.refactor(user));
+    }
 }

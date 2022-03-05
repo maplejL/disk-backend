@@ -9,4 +9,8 @@ public class SearchPageDto {
     private int pageNo;
 
     private int typeCode;
+
+    private String input;
+
+    private Integer userId;
 }
