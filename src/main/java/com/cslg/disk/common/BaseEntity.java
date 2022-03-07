@@ -27,12 +27,14 @@ public abstract class BaseEntity {
 
     // additional field
     @CreatedDate
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     private Date createdDate;
 
     @CreatedBy
     private String createdBy;
 
     @LastModifiedDate
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     private Date modifiedDate;
 
     @LastModifiedBy

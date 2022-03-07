@@ -14,6 +14,8 @@ import com.cslg.disk.example.user.dao.UserDao;
 import com.cslg.disk.example.user.entity.MyUser;
 import com.cslg.disk.example.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.jca.context.SpringContextResourceAdapter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;

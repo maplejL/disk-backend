@@ -52,7 +52,7 @@ public class TestController {
     public String doGet() {
         String s = "WB0Z8jqwJlYD+ZCjm3HPDv9AVgmtj5I5pCuKtEykRWLkblaz2W1JUt1h2gw4c4A++SnM/q9bKSRUFz/zmS/pvA==";
         UserServiceImpl service = new UserServiceImpl();
-        String md5Password = service.getMd5Password(s);
+        String md5Password = service.getMd5Password(s, false);
 
         return "123";
     }

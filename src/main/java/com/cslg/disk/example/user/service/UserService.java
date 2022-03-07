@@ -1,5 +1,7 @@
 package com.cslg.disk.example.user.service;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cslg.disk.example.user.dto.LoginDto;
 import com.cslg.disk.example.user.dto.RegisterDto;
 import com.cslg.disk.example.user.dto.UpdatePwdDto;

@@ -1,5 +1,7 @@
 package com.cslg.disk.example.file.service;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cslg.disk.common.exception.BusinessException;
 import com.cslg.disk.example.file.dao.ThumbnailDao;
 import com.cslg.disk.example.file.dto.SearchPageDto;
@@ -11,11 +13,14 @@ import com.cslg.disk.example.file.util.ImageUtil;
 import com.cslg.disk.example.file.util.MutiThreadDownLoad;
 import com.cslg.disk.example.user.dao.UserAvaterDao;
 import com.cslg.disk.example.user.entity.UserAvater;
+import com.cslg.disk.example.user.service.UserService;
+import com.cslg.disk.example.user.service.UserServiceImpl;
 import com.cslg.disk.utils.TencentCOSUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.*;
@@ -33,6 +38,9 @@ public class FileServiceImpl implements FileService  {
 
     @Autowired
     private UserAvaterDao userAvaterDao;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private ThumbnailDao thumbnailDao;
@@ -66,17 +74,18 @@ public class FileServiceImpl implements FileService  {
     }
 
     @Override
-    public Map<String, Object> getFile(SearchPageDto searchPageDto) {
+    public Map<String, Object> getFile(SearchPageDto searchPageDto, HttpServletRequest request) {
         int pageSize = searchPageDto.getPageSize();
         int typeCode = searchPageDto.getTypeCode();
         int pageNo = searchPageDto.getPageNo();
         String input = searchPageDto.getInput();
         int start = pageNo * pageSize;
         List<MyFile> myFileList = new ArrayList<>();
+        Integer userId = UserServiceImpl.getUserId(request);
         if (input == null) {
-            myFileList = fileDao.findByPage(start, pageSize, typeCode, searchPageDto.getUserId());
+            myFileList = fileDao.findByPage(start, pageSize, typeCode, userId);
         } else {
-            myFileList = fileDao.findByPageWithInput(start, pageSize, typeCode, input, searchPageDto.getUserId());
+            myFileList = fileDao.findByPageWithInput(start, pageSize, typeCode, input, userId);
         }
         if (typeCode == 1) {
             myFileList.forEach(item -> {
@@ -87,11 +96,42 @@ public class FileServiceImpl implements FileService  {
         Map<String, Object> map = new HashMap<>();
         Integer total;
         if (input != null) {
-            map.put("total", fileDao.findTotalWithInput(typeCode, input, searchPageDto.getUserId()));
+            map.put("total", fileDao.findTotalWithInput(typeCode, input, userId));
         } else {
-            map.put("total", fileDao.findTotal(typeCode, searchPageDto.getUserId()));
+            map.put("total", fileDao.findTotal(typeCode, userId, 0));
         }
         map.put("files", myFileList);
+        return map;
+    }
+
+    @Override
+    public Map<String, Object> getSharedFile(SearchPageDto searchPageDto, HttpServletRequest request) {
+        int pageSize = searchPageDto.getPageSize();
+        int typeCode = searchPageDto.getTypeCode();
+        int pageNo = searchPageDto.getPageNo();
+        String input = searchPageDto.getInput();
+        int start = pageNo * pageSize;
+        List<MyFile> myFileList = new ArrayList<>();
+        Integer userId = UserServiceImpl.getUserId(request);
+        if (input == null) {
+            myFileList = fileDao.findSharedFilesByPage(start, pageSize, typeCode, userId);
+        } else {
+            myFileList = fileDao.findSharedFilesByPageWithInput(start, pageSize, typeCode, input, userId);
+        }
+        if (typeCode == 1) {
+            myFileList.forEach(item -> {
+                String thumbnailName = thumbnailDao.findByVideoUrl(item.getUrl());
+                item.setThumbnailName("http://localhost:9999/" + thumbnailName + ".jpg");
+            });
+        }
+        Map<String, Object> map = new HashMap<>();
+        Integer total;
+        if (input != null) {
+            map.put("total", fileDao.findShredTotalWithInput(typeCode, input, userId));
+        } else {
+            map.put("total", fileDao.findSharedTotal(typeCode, userId, 0));
+        }
+        map.put("sharedFiles", myFileList);
         return map;
     }
 
@@ -100,12 +140,15 @@ public class FileServiceImpl implements FileService  {
         return fileDao.findAll();
     }
 
-    public MyFile uploadFile(MultipartFile file, int typeCode, String targetFilePath) {
+    public MyFile uploadFile(MultipartFile file, int typeCode, String targetFilePath, HttpServletRequest request) {
 
         if (file == null) {
             return null;
         }
-        String type = (file.getOriginalFilename().split("\\."))[1];
+        Integer userId = UserServiceImpl.getUserId(request);
+        String[] split1 = file.getOriginalFilename().split("\\.");
+        //取最后.后的类型
+        String type = split1[split1.length-1];
         List<String> typeNames = typeAndCode.get(typeCode);
         if (!typeNames.contains(type)) {
             throw new BusinessException("上传的文件类型错误!");
@@ -119,6 +162,7 @@ public class FileServiceImpl implements FileService  {
         uploadMyFile.setUrl(uploadFilePath);
         uploadMyFile.setTypeCode(typeCode);
         uploadMyFile.setTypeName(type);
+        uploadMyFile.setUserId(userId);
         String contentType = file.getContentType();
         String[] split = contentType.split("/");
 //        uploadMyFile.setTypeName(split[1]);
@@ -145,17 +189,18 @@ public class FileServiceImpl implements FileService  {
     }
 
     @Override
-    public UserAvater uploadAvater(String userId, MultipartFile file, String targetFilePath) {
+    public UserAvater uploadAvater(MultipartFile file, String targetFilePath, HttpServletRequest request) {
         if (file == null) {
             return null;
         }
+        Integer userId = UserServiceImpl.getUserId(request);
         String type = (file.getOriginalFilename().split("\\."))[1];
         String uploadFilePath = TencentCOSUtil.uploadfile(file);
         long size = file.getSize();
         String fileSize = fileUtil.getSize(size);
 
         //已存在则覆盖
-        UserAvater avater = userAvaterDao.findByUserId(Integer.valueOf(userId));
+        UserAvater avater = userAvaterDao.findByUserId(userId);
         if (avater == null) {
             avater = new UserAvater();
         }
@@ -163,7 +208,7 @@ public class FileServiceImpl implements FileService  {
         avater.setFileName(file.getOriginalFilename());
         avater.setUrl(uploadFilePath);
         avater.setTypeName(type);
-        avater.setUserId(Integer.valueOf(userId));
+        avater.setUserId(userId);
 
         return userAvaterDao.save(avater);
     }
@@ -179,6 +224,31 @@ public class FileServiceImpl implements FileService  {
             result.put(typeAndName.get(key), myFiles);
         }
         return result;
+    }
+
+    //与好友共享文件
+    @Override
+    public Object shareFile(Integer fileId, List<Integer> userIds, HttpServletRequest request) {
+        Integer currentUserId = UserServiceImpl.getUserId(request);
+        MyFile one = fileDao.getOne(fileId);
+        StringBuilder users = new StringBuilder();
+        if (one == null) {
+            return false;
+        }
+        if (one.getShareWithUser() == null) {
+            for (Integer userId : userIds) {
+                users.append(userId.toString()).append(",");
+            }
+        } else {
+            users.append(one.getShareWithUser()).append(",");
+            String[] split = one.getShareWithUser().split(",");
+            for (int i = 0; i < split.length; i++) {
+                users.append(split[i]).append(",");
+            }
+        }
+        users.replace(users.length()-1, users.length(), "");
+        one.setShareWithUser(users.toString());
+        return fileDao.save(one);
     }
 
     /**
@@ -237,13 +307,15 @@ public class FileServiceImpl implements FileService  {
         return save;
     }
 
-    public Map<String, Object> getDeleteFiles(SearchPageDto searchPageDto) {
+    public Map<String, Object> getDeleteFiles(SearchPageDto searchPageDto, HttpServletRequest request) {
         int pageSize = searchPageDto.getPageSize();
         int typeCode = searchPageDto.getTypeCode();
         int pageNo = searchPageDto.getPageNo();
 
         int start = pageNo * pageSize;
-        List<MyFile> myFileList = fileDao.findDeleteByPage(start, pageSize);
+        Integer userId = UserServiceImpl.getUserId(request);
+        List<MyFile> myFileList = fileDao.findDeleteByPage(start, pageSize, userId);
+
         myFileList.forEach(item -> {
             if (item.getTypeCode() == 1) {
                 String thumbnailName = thumbnailDao.findByVideoUrl(item.getUrl());
@@ -251,7 +323,7 @@ public class FileServiceImpl implements FileService  {
             }
         });
         Map<String, Object> map = new HashMap<>();
-        map.put("total", fileDao.findAll().stream().filter(e -> e.getIsDelete()==1).count());
+        map.put("total", fileDao.findTotal(userId, 1));
         map.put("files", myFileList);
         return map;
     }

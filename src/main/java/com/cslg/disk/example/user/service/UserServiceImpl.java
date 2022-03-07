@@ -3,6 +3,7 @@ package com.cslg.disk.example.user.service;
 import com.alibaba.fastjson.JSON;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cslg.disk.common.exception.BusinessException;
 import com.cslg.disk.example.chat.dao.TempChatDao;
 import com.cslg.disk.example.chat.entity.TempChat;
@@ -66,7 +67,7 @@ public class UserServiceImpl implements UserService {
         if (password.length() == 0) {
             throw new BusinessException("此用户不存在");
         } else {
-            String md5Password = getMd5Password(loginDto.getPassword());
+            String md5Password = getMd5Password(loginDto.getPassword(), false);
             if (md5Password.equals(password)) {
                 String token = getToken(userInfo);
                 if (redisService.getValue("user:"+userInfo.getId()) != null) {
@@ -112,16 +113,18 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
-    public String getMd5Password(String password) {
+    public String getMd5Password(String password, boolean isRegister) {
         String realPass = RSAUtils.privateDecrypt(Base64.decodeBase64(password), RSAUtils.privateKeya);
-        //必须包含大小写字母和数字的组合，不能使用特殊字符，长度在 8-10 之间
-        String patternUserName = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{8,10}$";
-        Pattern r = Pattern.compile(patternUserName);
-        Matcher m = r.matcher(realPass);
-        System.out.println(m.matches());
-        if (m.matches() == false) {
-            throw new BusinessException("密码必须包含大小写字母和数字的组合，不能使用特殊字符，长度在 8-10 之间");
+        if (isRegister == true) {
+            //必须包含大小写字母和数字的组合，不能使用特殊字符，长度在 8-10 之间
+            String patternUserName = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{8,10}$";
+            Pattern r = Pattern.compile(patternUserName);
+            Matcher m = r.matcher(realPass);
+            if (m.matches() == false) {
+                throw new BusinessException("密码必须包含大小写字母和数字的组合，不能使用特殊字符，长度在 8-10 之间");
+            }
         }
+
         MessageDigest md = null;
         try {
             md = MessageDigest.getInstance("MD5");
@@ -137,7 +140,7 @@ public class UserServiceImpl implements UserService {
         if (registerDto == null) {
             throw new BusinessException("无注册信息");
         }
-        if (registerDto.getEmail() != null || !"".equals(registerDto.getEmail())) {
+        if (registerDto.getEmail() != null && !("".equals(registerDto.getEmail()))) {
             String patternEmail = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$";
             Pattern r = Pattern.compile(patternEmail);
             Matcher m = r.matcher(registerDto.getEmail());
@@ -146,7 +149,7 @@ public class UserServiceImpl implements UserService {
                 throw new BusinessException("邮箱地址不合法, 如(xxxxxxxxxxx@qq.com)");
             }
         }
-        if (registerDto.getUsername() != null || !"".equals(registerDto.getUsername())) {
+        if (registerDto.getUsername() != null || !("".equals(registerDto.getUsername()))) {
             //字母开头，允许5-16字节，允许字母数字下划线
             String patternUserName = "^[a-zA-Z][a-zA-Z0-9_]{4,15}$";
             Pattern r = Pattern.compile(patternUserName);
@@ -161,7 +164,7 @@ public class UserServiceImpl implements UserService {
         }
         MyUser myUser = new MyUser();
         if (registerDto.getPassword() != null) {
-            registerDto.setPassword(getMd5Password(registerDto.getPassword()));
+            registerDto.setPassword(getMd5Password(registerDto.getPassword(), true));
         }
         BeanUtils.copyProperties(registerDto, myUser);
         MyUser save = userDao.save(myUser);
@@ -170,7 +173,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Object updatePwd(UpdatePwdDto updatePwdDto) {
-        String newPassword = getMd5Password(updatePwdDto.getNewPassword());
+        String newPassword = getMd5Password(updatePwdDto.getNewPassword(), true);
         MyUser user = userDao.findById(updatePwdDto.getId());
         user.setPassword(newPassword);
         MyUser save = userDao.save(user);
@@ -238,5 +241,12 @@ public class UserServiceImpl implements UserService {
                 .withAudience(String.valueOf(user.getId()))
                 .sign(Algorithm.HMAC256(user.getPassword()));
         return token;
+    }
+
+    public static Integer getUserId(HttpServletRequest request) {
+        String token = request.getHeader("token");
+        DecodedJWT decode = JWT.decode(token);
+        String userId = decode.getAudience().get(0);
+        return Integer.valueOf(userId);
     }
 }

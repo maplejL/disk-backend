@@ -23,4 +23,6 @@ public class MyFile extends BaseEntity {
     private static Boolean isHover = false;
 
     private Integer userId;
+
+    private String shareWithUser;
 }

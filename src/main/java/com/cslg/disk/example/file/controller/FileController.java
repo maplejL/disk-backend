@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
@@ -29,8 +30,8 @@ public class FileController {
     //分页获取文件
     @PostMapping("/getPage")
     @UserLoginToken
-    public Map<String, Object> getFile(@RequestBody SearchPageDto searchPageDto) {
-        return fileService.getFile(searchPageDto);
+    public Map<String, Object> getFile(@RequestBody SearchPageDto searchPageDto, HttpServletRequest request) {
+        return fileService.getFile(searchPageDto, request);
     }
 
     //获取全部文件
@@ -43,25 +44,25 @@ public class FileController {
     //获取全部文件
     @PostMapping("/getDeleteFiles")
     @UserLoginToken
-    public ResponseMessage getDeleteFiles(@RequestBody SearchPageDto searchPageDto) {
-        return ResponseMessage.success(fileService.getDeleteFiles(searchPageDto));
+    public ResponseMessage getDeleteFiles(@RequestBody SearchPageDto searchPageDto, HttpServletRequest request) {
+        return ResponseMessage.success(fileService.getDeleteFiles(searchPageDto, request));
     }
 
     @PostMapping("/upload")
     @UserLoginToken
-    public ResponseMessage uploadFile( @RequestParam(value = "file") MultipartFile file,
+    public ResponseMessage uploadFile(@RequestParam(value = "file") MultipartFile file,
                                       @RequestParam(value = "typeCode") int typeCode,
-                                      @RequestParam(value = "userId") Integer userId,
-                                      @RequestParam(value = "targetFilePath") String targetFilePath) {
-        return ResponseMessage.success(fileService.uploadFile(file, typeCode, targetFilePath));
+                                      @RequestParam(value = "targetFilePath") String targetFilePath,
+                                      HttpServletRequest request) {
+        return ResponseMessage.success(fileService.uploadFile(file, typeCode, targetFilePath, request));
     }
 
     @PostMapping("/uploadAvater")
     @UserLoginToken
     public ResponseMessage uploadAvater( @RequestParam(value = "file") MultipartFile file,
-                                       @RequestParam(value = "userId" ) String userId,
-                                       @RequestParam(value = "targetFilePath") String targetFilePath) {
-        return ResponseMessage.success(fileService.uploadAvater(userId, file, targetFilePath));
+                                       @RequestParam(value = "targetFilePath") String targetFilePath,
+                                         HttpServletRequest request) {
+        return ResponseMessage.success(fileService.uploadAvater(file, targetFilePath, request));
     }
 
 
@@ -111,6 +112,20 @@ public class FileController {
     @UserLoginToken
     public ResponseMessage getFileTree(@RequestParam("userId") Integer userId) {
         return ResponseMessage.success(fileService.getFileTree(userId));
+    }
+
+    @GetMapping("/share")
+    @UserLoginToken
+    public ResponseMessage shareFile(@RequestParam("fileId")Integer fileId,
+                                     @RequestParam("userIds")List<Integer> userIds,
+                                     HttpServletRequest request) {
+        return ResponseMessage.success(fileService.shareFile(fileId, userIds, request));
+    }
+
+    @PostMapping("/getShareFiles")
+    @UserLoginToken
+    public ResponseMessage getSharedFiles(@RequestBody SearchPageDto searchPageDto, HttpServletRequest request) {
+        return ResponseMessage.success(fileService.getSharedFile(searchPageDto, request));
     }
 
 //    @PostMapping("/search")
