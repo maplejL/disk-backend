@@ -1,5 +1,6 @@
 package com.cslg.disk.example.file.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.cslg.disk.common.ResponseMessage;
 import com.cslg.disk.example.file.dao.FileDao;
 import com.cslg.disk.example.file.dto.DeleteFileDto;
@@ -9,12 +10,14 @@ import com.cslg.disk.example.file.service.FileService;
 import com.cslg.disk.example.user.anno.UserLoginToken;
 import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -117,15 +120,28 @@ public class FileController {
     @GetMapping("/share")
     @UserLoginToken
     public ResponseMessage shareFile(@RequestParam("fileId")Integer fileId,
-                                     @RequestParam("userIds")List<Integer> userIds,
+                                     @RequestParam("userIds")String userIds,
                                      HttpServletRequest request) {
-        return ResponseMessage.success(fileService.shareFile(fileId, userIds, request));
+        List<Integer> ids = JSON.parseArray(userIds, Integer.class);
+        return ResponseMessage.success(fileService.shareFile(fileId, ids, request));
     }
 
+    /**
+     * 分页获取其他用户共享的文件
+     * @param searchPageDto
+     * @param request
+     * @return
+     */
     @PostMapping("/getShareFiles")
     @UserLoginToken
     public ResponseMessage getSharedFiles(@RequestBody SearchPageDto searchPageDto, HttpServletRequest request) {
         return ResponseMessage.success(fileService.getSharedFile(searchPageDto, request));
+    }
+
+    @GetMapping("/generateQRCode")
+    @UserLoginToken
+    public ResponseMessage generateQRCode(@RequestParam("fileId") String fileId) {
+        return ResponseMessage.success(fileService.generatorQrCode(fileId));
     }
 
 //    @PostMapping("/search")

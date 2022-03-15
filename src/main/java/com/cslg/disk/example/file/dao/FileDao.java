@@ -16,9 +16,11 @@ public interface FileDao extends JpaRepository<MyFile, Integer> {
             "and type_code = :typeCode and is_delete=0 limit :start,:size", nativeQuery = true)
     ArrayList<MyFile> findByPage(int start, int size, int typeCode, int userId);
 
-    @Query(value = "select * from my_file " +
-            "where share_with_user like CONCAT('%', :userId, '%') " +
-            "and type_code = :typeCode and is_delete=0 limit :start,:size", nativeQuery = true)
+    @Query(value = "select mf.* from my_file mf " +
+            "join share_record sr " +
+            "on sr.shared_ids like CONCAT('%', :userId, '%') " +
+            "where sr.file_id=mf.id " +
+            "and type_code = :typeCode and sr.is_delete=0 limit :start,:size", nativeQuery = true)
     ArrayList<MyFile> findSharedFilesByPage(int start, int size, int typeCode, int userId);
 
     @Modifying
@@ -45,10 +47,17 @@ public interface FileDao extends JpaRepository<MyFile, Integer> {
     @Query(nativeQuery = true, value = "select count(*) from my_file where user_id=:userId and is_delete=:isDelete and type_code = :typeCode")
     Integer findTotal(int typeCode, int userId, int isDelete);
 
-    @Query(nativeQuery = true, value = "select count(*) from my_file where share_with_user like CONCAT('%', :userId, '%') and is_delete=0 and file_name like CONCAT('%', :input, '%') and type_code = :typeCode")
-    Integer findShredTotalWithInput(int typeCode, String input, int userId);
+    @Query(nativeQuery = true, value = "select count(*) from my_file mf " +
+            "join share_record sr " +
+            "on sr.shared_ids like CONCAT('%', :userId, '%') " +
+            "where sr.file_id=mf.id and mf.type_code=:typeCode " +
+            "and mf.file_name like CONCAT('%', :input, '%') and sr.is_delete=0")
+    Integer findSharedTotalWithInput(int typeCode, String input, int userId);
 
-    @Query(nativeQuery = true, value = "select count(*) from my_file where share_with_user like CONCAT('%', :userId, '%') and is_delete=:isDelete and type_code = :typeCode")
+    @Query(nativeQuery = true, value = "select count(*) from my_file mf " +
+            "join share_record sr " +
+            "on sr.shared_ids like CONCAT('%', :userId, '%') " +
+            "where sr.file_id=mf.id and sr.is_delete=:isDelete and mf.type_code = :typeCode")
     Integer findSharedTotal(int typeCode, int userId, int isDelete);
 
     @Query(nativeQuery = true, value = "select count(*) from my_file where user_id=:userId and is_delete=:isDelete")
@@ -57,8 +66,10 @@ public interface FileDao extends JpaRepository<MyFile, Integer> {
     @Query(nativeQuery = true, value = "select * from my_file where user_id=:userId and is_delete=0")
     List<MyFile> findByUserId(Integer userId);
 
-    @Query(nativeQuery = true, value = "select * from my_file " +
-            "where share_with_user like CONCAT('%', :userId, '%') and file_name like CONCAT('%', :input, '%') " +
-            "and type_code = :typeCode and is_delete=0 limit :start,:pageSize")
+    @Query(nativeQuery = true, value = "select mf.* from my_file mf" +
+            "join share_record sr" +
+            "on sr.shared_ids like CONCAT('%', :userId, '%') " +
+            "where sr.file_id=mf.id and mf.file_name like CONCAT('%', :input, '%')" +
+            "and type_code = :typeCode and sr.is_delete=0 limit :start,:pageSize")
     List<MyFile> findSharedFilesByPageWithInput(int start, int pageSize, int typeCode, String input, Integer userId);
 }

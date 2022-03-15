@@ -42,4 +42,6 @@ public interface FileService {
     Map<String, List<MyFile>> getFileTree(Integer userId);
 
     Object shareFile(Integer fileId, List<Integer> userIds, HttpServletRequest request);
+
+    Object generatorQrCode(String fileId);
 }

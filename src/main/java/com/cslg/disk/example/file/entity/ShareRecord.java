@@ -7,10 +7,10 @@ import javax.persistence.Entity;
 
 @Data
 @Entity
-public class Document extends BaseEntity {
-    private String url;
+public class ShareRecord extends BaseEntity {
+    private Integer fileId;
 
-    private String size;
+    private Integer userId;
 
-    private String fileName;
+    private String sharedIds;
 }

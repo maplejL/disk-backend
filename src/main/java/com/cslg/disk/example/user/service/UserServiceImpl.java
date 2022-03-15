@@ -7,6 +7,9 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cslg.disk.common.exception.BusinessException;
 import com.cslg.disk.example.chat.dao.TempChatDao;
 import com.cslg.disk.example.chat.entity.TempChat;
+import com.cslg.disk.example.file.dao.FileDao;
+import com.cslg.disk.example.file.entity.MyFile;
+import com.cslg.disk.example.file.service.FileService;
 import com.cslg.disk.example.redis.RedisService;
 import com.cslg.disk.example.socket.WebSocket;
 import com.cslg.disk.example.user.dao.UserAvaterDao;
@@ -29,6 +32,9 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +47,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RedisService redisService;
+
+    @Autowired
+    private FileDao fileDao;
 
     @Autowired
     private UserAvaterDao userAvaterDao;
@@ -101,6 +110,16 @@ public class UserServiceImpl implements UserService {
                     tempChatMap.put("tempChat", tempChats);
                     webSocket.sendOneObject(userInfo.getId().toString(), tempChatMap);
                 }
+                //用于开启敏感词汇监测的定时任务
+//                ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+//                Runnable runnable = new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        List<MyFile> byUserId = fileDao.findByUserId(userInfo.getId());
+//                        System.out.println("111");
+//                    }
+//                };
+//                scheduledExecutorService.scheduleAtFixedRate(runnable, 0,  1, TimeUnit.HOURS);
                 return map;
             }
             throw new BusinessException("用户密码不正确");
@@ -233,12 +252,17 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    @Override
+    public List<MyUser> getAllUsers() {
+        return userDao.findAll();
+    }
+
     public String getToken(MyUser user) {
         String token="";
         token= JWT.create()
                 .withJWTId(UUID.randomUUID().toString())
                 .withIssuedAt(new Date())
-                .withAudience(String.valueOf(user.getId()))
+                .withAudience(String.valueOf(user.getId()), user.getIsAdmin().toString())
                 .sign(Algorithm.HMAC256(user.getPassword()));
         return token;
     }

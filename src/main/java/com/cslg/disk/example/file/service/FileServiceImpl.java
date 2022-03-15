@@ -3,22 +3,33 @@ package com.cslg.disk.example.file.service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cslg.disk.common.exception.BusinessException;
+import com.cslg.disk.example.file.dao.SharedFileDao;
 import com.cslg.disk.example.file.dao.ThumbnailDao;
 import com.cslg.disk.example.file.dto.SearchPageDto;
 import com.cslg.disk.example.file.entity.MyFile;
+import com.cslg.disk.example.file.entity.ShareRecord;
 import com.cslg.disk.example.file.entity.Thumbnail;
 import com.cslg.disk.example.file.dao.FileDao;
 import com.cslg.disk.example.file.util.FileUtil;
 import com.cslg.disk.example.file.util.ImageUtil;
 import com.cslg.disk.example.file.util.MutiThreadDownLoad;
+import com.cslg.disk.example.socket.WebSocket;
 import com.cslg.disk.example.user.dao.UserAvaterDao;
 import com.cslg.disk.example.user.entity.UserAvater;
 import com.cslg.disk.example.user.service.UserService;
 import com.cslg.disk.example.user.service.UserServiceImpl;
 import com.cslg.disk.utils.TencentCOSUtil;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import sun.misc.BASE64Encoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,6 +39,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +52,12 @@ public class FileServiceImpl implements FileService  {
 
     @Autowired
     private UserAvaterDao userAvaterDao;
+
+    @Autowired
+    private WebSocket socket;
+
+    @Autowired
+    private SharedFileDao sharedFileDao;
 
     @Autowired
     private UserService userService;
@@ -127,7 +147,7 @@ public class FileServiceImpl implements FileService  {
         Map<String, Object> map = new HashMap<>();
         Integer total;
         if (input != null) {
-            map.put("total", fileDao.findShredTotalWithInput(typeCode, input, userId));
+            map.put("total", fileDao.findSharedTotalWithInput(typeCode, input, userId));
         } else {
             map.put("total", fileDao.findSharedTotal(typeCode, userId, 0));
         }
@@ -235,20 +255,21 @@ public class FileServiceImpl implements FileService  {
         if (one == null) {
             return false;
         }
-        if (one.getShareWithUser() == null) {
-            for (Integer userId : userIds) {
-                users.append(userId.toString()).append(",");
-            }
-        } else {
-            users.append(one.getShareWithUser()).append(",");
-            String[] split = one.getShareWithUser().split(",");
-            for (int i = 0; i < split.length; i++) {
-                users.append(split[i]).append(",");
-            }
+        for (Integer userId : userIds) {
+            users.append(userId.toString()).append(",");
         }
         users.replace(users.length()-1, users.length(), "");
-        one.setShareWithUser(users.toString());
-        return fileDao.save(one);
+        ShareRecord shareRecord = new ShareRecord();
+        shareRecord.setFileId(fileId);
+        shareRecord.setUserId(currentUserId);
+        shareRecord.setSharedIds(users.toString());
+        ShareRecord save = sharedFileDao.save(shareRecord);
+        if (save != null) {
+            for (Integer userId : userIds) {
+                socket.sendOneMessage(userId.toString(), "您有新的分享文件");
+            }
+        }
+        return true;
     }
 
     /**
@@ -354,4 +375,44 @@ public class FileServiceImpl implements FileService  {
         }
     }
 
+    /**
+     * 生成不带白边的二维码
+     *
+     * @throws Exception 异常
+     */
+    public Object generatorQrCode(String fileId) {
+        MyFile file = fileDao.getOne(Integer.valueOf(fileId));
+        String QRCodePath = "C:\\Users\\user\\Pictures\\qrcode.png";
+        //定义二维码的内容参数
+        Map<EncodeHintType,Object> hints=new HashMap<EncodeHintType, Object>();
+        //设置边框距
+        hints.put(EncodeHintType.MARGIN,2);
+        //设置字符编码格式
+        hints.put(EncodeHintType.CHARACTER_SET,"UTF-8");
+        //设置容错等级 等级越高存入内容越少
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M); //以上就是设置内容参数 如果不用中文可以不用设置
+        try {
+            //设置二维码的内容
+            String contents = file.getUrl();
+            //第一个参数为二维码内容，第二个是二维码格式，第三四是宽高，第四是前面写的内容参数 如果无写null
+            BitMatrix bm = new MultiFormatWriter().encode(contents, BarcodeFormat.QR_CODE, 200, 200, hints);
+            //第一个参数是BitMatrix，第二个是生成图片的格式，第三个是生成文件的地址
+            MatrixToImageWriter.writeToStream(bm, "png", new FileOutputStream(QRCodePath));
+            InputStream in = null;
+            byte[] data = null;
+            try {
+                in = new FileInputStream(QRCodePath);
+                data = new byte[in.available()];
+                in.read(data);
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //进行Base64编码
+            BASE64Encoder encoder = new BASE64Encoder();
+            return encoder.encode(data);
+        } catch (Exception e) {
+            throw new BusinessException(e.getMessage());
+        }
+    }
 }

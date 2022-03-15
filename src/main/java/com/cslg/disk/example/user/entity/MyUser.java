@@ -24,6 +24,8 @@ public class MyUser extends BaseEntity{
 
     private String address;
 
+    private Integer isAdmin = 0;
+
     @Transient
     private Integer avaterId;
 

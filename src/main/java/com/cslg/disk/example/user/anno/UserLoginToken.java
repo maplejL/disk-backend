@@ -12,4 +12,5 @@ import java.lang.annotation.Target;
 public @interface UserLoginToken {
     boolean required() default true;
     int id() default 0;
+    boolean admin() default false;
 }

@@ -55,6 +55,13 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         //检查有没有需要用户权限的注解
         if (method.isAnnotationPresent(UserLoginToken.class)) {
             UserLoginToken userLoginToken = method.getAnnotation(UserLoginToken.class);
+            if (userLoginToken.admin()) {
+                DecodedJWT decode = JWT.decode(token);
+                String isAdmin = decode.getAudience().get(1);
+                if ("0".equals(isAdmin)) {
+                    throw new BusinessException("您没有权限进行此操作");
+                }
+            }
             if (userLoginToken.required()) {
                 // 执行认证
                 if (token == null || token.equals("")) {

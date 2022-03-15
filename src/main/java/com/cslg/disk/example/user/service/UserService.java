@@ -30,4 +30,6 @@ public interface UserService {
     MyUser getUserById(String id);
 
     MyUser refactor(MyUser user);
+
+    List<MyUser> getAllUsers();
 }
