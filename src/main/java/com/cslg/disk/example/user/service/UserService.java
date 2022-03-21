@@ -32,4 +32,8 @@ public interface UserService {
     MyUser refactor(MyUser user);
 
     List<MyUser> getAllUsers();
+
+    MyUser addUsers(RegisterDto registerDto);
+
+    Object deleteUser(List<String> ids);
 }

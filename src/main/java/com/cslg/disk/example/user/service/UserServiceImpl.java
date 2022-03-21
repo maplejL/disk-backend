@@ -257,6 +257,24 @@ public class UserServiceImpl implements UserService {
         return userDao.findAll();
     }
 
+    @Override
+    public MyUser addUsers(RegisterDto registerDto) {
+        if (registerDto == null) {
+            return null;
+        }
+        MyUser register = register(registerDto);
+        return register;
+    }
+
+    @Override
+    public Object deleteUser(List<String> ids) {
+        if (ids.size() == 0 || ids == null) {
+            return null;
+        }
+        Integer integer = userDao.deleteByIds(ids);
+        return integer;
+    }
+
     public String getToken(MyUser user) {
         String token="";
         token= JWT.create()

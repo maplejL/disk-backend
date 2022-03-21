@@ -21,7 +21,7 @@ public interface FileService {
 
     public MyFile uploadFile(MultipartFile file, int typeCode, String targetFilePath, HttpServletRequest request);
 
-    Object downloadFile(String urlStr,String savePath, HttpServletResponse res) throws IOException;
+    Object downloadFile(String urlStr,String savePath, HttpServletResponse res, HttpServletRequest request) throws IOException;
 
     Object deleteFile(List<Integer> ids);
 

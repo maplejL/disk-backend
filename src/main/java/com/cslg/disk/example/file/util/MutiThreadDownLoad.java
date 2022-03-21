@@ -1,10 +1,14 @@
 package com.cslg.disk.example.file.util;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -37,7 +41,7 @@ public class MutiThreadDownLoad {
         this.latch = latch;
     }
 
-    public HttpServletResponse executeDownLoad(HttpServletResponse res) {
+    public HttpServletResponse executeDownLoad(HttpServletResponse res, HttpServletRequest request) {
 
         try {
             URL url = new URL(serverPath);
@@ -64,13 +68,8 @@ public class MutiThreadDownLoad {
                         endIndex = length;
                     }
                     System.out.println("线程" + threadId + "下载:" + startIndex + "字节~" + endIndex + "字节");
-                    new DownLoadThread(threadId, startIndex, endIndex).start();
+                    new DownLoadThread(threadId, startIndex, endIndex, res, request).start();
                 }
-                res.setCharacterEncoding("utf-8");
-                res.setContentType("application/octet-stream");
-                res.setContentLength(length);
-                res.setHeader("Content-Disposition", "attachment; filename=1");
-
             }
 
         } catch (Exception e) {
@@ -98,10 +97,16 @@ public class MutiThreadDownLoad {
          */
         private int endIndex;
 
-        public DownLoadThread(int threadId, int startIndex, int endIndex) {
+        private HttpServletResponse response;
+
+        private HttpServletRequest request;
+
+        public DownLoadThread(int threadId, int startIndex, int endIndex, HttpServletResponse response, HttpServletRequest request) {
             this.threadId = threadId;
             this.startIndex = startIndex;
             this.endIndex = endIndex;
+            this.response = response;
+            this.request = request;
         }
 
 
@@ -127,11 +132,19 @@ public class MutiThreadDownLoad {
 
                 int len = 0;
                 byte[] buffer = new byte[1024];
+                OutputStream outputStream = response.getOutputStream();
+                String mineType = request.getServletContext().getMimeType(URLEncoder.encode("test", "UTF-8"));
+                response.setCharacterEncoding("utf-8");
+                response.setContentType(mineType);
+                response.setHeader("Content-Disposition", "attachment; filename=1");
+                response.setHeader("Connection", "close");
                 while ((len = is.read(buffer)) != -1) {
                     raf.write(buffer, 0, len);
+                    outputStream.write(buffer, 0, len);
                 }
                 is.close();
                 raf.close();
+                outputStream.close();
                 System.out.println("线程" + threadId + "下载完毕");
                 //计数值减一
                 latch.countDown();
@@ -139,7 +152,6 @@ public class MutiThreadDownLoad {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
     }
 }

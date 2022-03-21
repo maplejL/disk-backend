@@ -32,12 +32,12 @@ public class UserController extends GlobalExceptionHandler {
 
     protected static String privateKey;
 
-    protected Map<String, Integer> loginTimes = new ConcurrentHashMap<>();
+    public static Map<String, Integer> loginTimes = new ConcurrentHashMap<>();
 
-    protected Set<String> lockedHost = new ConcurrentSkipListSet<>();
+    public static Set<String> lockedHost = new ConcurrentSkipListSet<>();
 
     //默认登录失败次数为3
-    protected Integer limitLoginTime = 5;
+    public static Integer limitLoginTime = 5;
 
     static {
         Map<String, String> keys = RSAUtils.createKeys(512);
@@ -116,42 +116,4 @@ public class UserController extends GlobalExceptionHandler {
         return ResponseMessage.success(userService.refactor(user));
     }
 
-    /**
-     * 获取被锁定的ip和用户
-     * @return
-     */
-    @GetMapping("/locked")
-    @UserLoginToken(admin = true, required = false)
-    @ResponseBody
-    public ResponseMessage getLockedHost() {
-        Map<String, Set<String>> map = new HashMap<>();
-        map.put("lockedHosts", lockedHost);
-        return ResponseMessage.success(map);
-    }
-
-    /**
-     * 解锁用户和ip
-     * @param hosts ip列表
-     * @return
-     */
-    @GetMapping("/unlock")
-    @UserLoginToken(admin = true)
-    @ResponseBody
-    public Boolean unlockHost(@RequestParam(value = "hosts") List<String> hosts) {
-        if (hosts == null) {
-            return false;
-        }
-        for (String host : hosts) {
-            lockedHost.remove(host);
-            loginTimes.remove(host);
-        }
-        return true;
-    }
-
-    @GetMapping("/users")
-    @UserLoginToken(admin = true)
-    @ResponseBody
-    public ResponseMessage getAllUsers() {
-        return ResponseMessage.success(userService.getAllUsers());
-    }
 }

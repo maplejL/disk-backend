@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import sun.misc.BASE64Encoder;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
@@ -291,7 +292,7 @@ public class FileServiceImpl implements FileService  {
     }
 
     @Override
-    public Object downloadFile(String id,String savePath, HttpServletResponse res) throws IOException {
+    public Object downloadFile(String id,String savePath, HttpServletResponse response, HttpServletRequest request) throws IOException {
         MyFile one = fileDao.getOne(Integer.valueOf(id));
         String urlStr = one.getUrl();
         URL url = new URL(urlStr);
@@ -303,7 +304,7 @@ public class FileServiceImpl implements FileService  {
         MutiThreadDownLoad mutiThreadDownLoad = new MutiThreadDownLoad(threadSize,urlStr,savePath,latch);
         long startTime = System.currentTimeMillis();
         try {
-            res = mutiThreadDownLoad.executeDownLoad(res);
+            response = mutiThreadDownLoad.executeDownLoad(response, request);
             latch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -313,6 +314,11 @@ public class FileServiceImpl implements FileService  {
         Map<String, Object> map = new HashMap<>();
         map.put("time", (endTime - startTime) / 1000);
         map.put("path", savePath);
+//        OutputStream outputStream = res.getOutputStream();
+//        res.setHeader("Content-Disposition", "attachment; filename=" + path);
+//        res.setCharacterEncoding("utf-8");
+//        res.setContentType("application/vnd.ms-excel");
+//        res.setHeader("Connection", "close");
         return map;
     }
 
