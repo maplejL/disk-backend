@@ -26,24 +26,24 @@ public class RightController {
         return ResponseMessage.success(rightService.getAllRoles());
     }
 
-    @PostMapping("/addRights")
-    @UserLoginToken(admin = true)
-    @ResponseBody
-    public ResponseMessage addUsers(@RequestBody RegisterDto registerDto) {
-        return ResponseMessage.success(rightService.addRights(registerDto));
-    }
-
-    @GetMapping("/deleteRight")
-    @UserLoginToken(admin = true)
-    @ResponseBody
-    public ResponseMessage deleteUser(@RequestParam(value = "ids") List<String> ids) {
-        return ResponseMessage.success(rightService.deleteUser(ids));
-    }
-
-    @PostMapping("/updateRight")
-    @UserLoginToken(admin = true)
-    @ResponseBody
-    public ResponseMessage updateUser(@RequestBody MyUser user) {
-        return ResponseMessage.success(rightService.refactor(user));
-    }
+//    @PostMapping("/addRights")
+//    @UserLoginToken(admin = true)
+//    @ResponseBody
+//    public ResponseMessage addUsers(@RequestBody RegisterDto registerDto) {
+//        return ResponseMessage.success(rightService.addRights(registerDto));
+//    }
+//
+//    @GetMapping("/deleteRight")
+//    @UserLoginToken(admin = true)
+//    @ResponseBody
+//    public ResponseMessage deleteUser(@RequestParam(value = "ids") List<String> ids) {
+//        return ResponseMessage.success(rightService.deleteUser(ids));
+//    }
+//
+//    @PostMapping("/updateRight")
+//    @UserLoginToken(admin = true)
+//    @ResponseBody
+//    public ResponseMessage updateUser(@RequestBody MyUser user) {
+//        return ResponseMessage.success(rightService.refactor(user));
+//    }
 }

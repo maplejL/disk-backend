@@ -22,10 +22,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * @Author: zh
- * @Date: 2020/6/5 16:22
- */
 @Data
 @Slf4j
 public class TencentCOSUtil {

@@ -1,7 +1,7 @@
 package com.cslg.disk.example.right.service;
 
 import com.cslg.disk.example.right.dao.RightDao;
-import com.cslg.disk.example.right.entity.Right;
+import com.cslg.disk.example.right.entity.MyRight;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,8 +14,8 @@ public class RightServiceImpl implements RightService {
 
 
     @Override
-    public List<Right> getAllRoles() {
-        List<Right> all = rightDao.findAll();
+    public List<MyRight> getAllRoles() {
+        List<MyRight> all = rightDao.findAll();
         return all;
     }
 }

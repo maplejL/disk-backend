@@ -1,6 +1,5 @@
 package com.cslg.disk.example.role.dao;
 
-import com.cslg.disk.example.right.entity.Right;
 import com.cslg.disk.example.role.entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

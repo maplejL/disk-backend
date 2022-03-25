@@ -15,6 +15,7 @@ import com.cslg.disk.example.file.util.ImageUtil;
 import com.cslg.disk.example.file.util.MutiThreadDownLoad;
 import com.cslg.disk.example.socket.WebSocket;
 import com.cslg.disk.example.user.dao.UserAvaterDao;
+import com.cslg.disk.example.user.entity.MyUser;
 import com.cslg.disk.example.user.entity.UserAvater;
 import com.cslg.disk.example.user.service.UserService;
 import com.cslg.disk.example.user.service.UserServiceImpl;
@@ -38,6 +39,9 @@ import javax.transaction.Transactional;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -381,13 +385,31 @@ public class FileServiceImpl implements FileService  {
         }
     }
 
+    private String getExtractionCode() {
+        String[] beforeShuffle = new String[] { "2", "3", "4", "5", "6", "7",
+                "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
+                "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V",
+                "W", "X", "Y", "Z" };
+        List list = Arrays.asList(beforeShuffle);
+        Collections.shuffle(list);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            sb.append(list.get(i));
+        }
+        String afterShuffle = sb.toString();
+        String result = afterShuffle.substring(5, 9);
+        return result;
+    }
+
     /**
      * 生成不带白边的二维码
      *
      * @throws Exception 异常
      */
-    public Object generatorQrCode(String fileId) {
+    @Override
+    public Object generatorQrCode(String fileId,Integer validPeriod, HttpServletRequest request) {
         MyFile file = fileDao.getOne(Integer.valueOf(fileId));
+        int typeCode = file.getTypeCode();
         String QRCodePath = "C:\\Users\\user\\Pictures\\qrcode.png";
         //定义二维码的内容参数
         Map<EncodeHintType,Object> hints=new HashMap<EncodeHintType, Object>();
@@ -397,9 +419,16 @@ public class FileServiceImpl implements FileService  {
         hints.put(EncodeHintType.CHARACTER_SET,"UTF-8");
         //设置容错等级 等级越高存入内容越少
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M); //以上就是设置内容参数 如果不用中文可以不用设置
+        ShareRecord shareRecord = new ShareRecord();
+        shareRecord.setFileId(Integer.valueOf(fileId));
+        shareRecord.setUserId(UserServiceImpl.getUserId(request));
+        shareRecord.setValidPeriod(validPeriod);
+        shareRecord.setExtractionCode(getExtractionCode());
+        ShareRecord save = sharedFileDao.save(shareRecord);
         try {
             //设置二维码的内容
-            String contents = file.getUrl();
+//            String contents = file.getUrl();
+            String contents = "http://localhost:8080/#/share?typeCode="+typeCode+"&id="+save.getId();
             //第一个参数为二维码内容，第二个是二维码格式，第三四是宽高，第四是前面写的内容参数 如果无写null
             BitMatrix bm = new MultiFormatWriter().encode(contents, BarcodeFormat.QR_CODE, 200, 200, hints);
             //第一个参数是BitMatrix，第二个是生成图片的格式，第三个是生成文件的地址
@@ -416,9 +445,64 @@ public class FileServiceImpl implements FileService  {
             }
             //进行Base64编码
             BASE64Encoder encoder = new BASE64Encoder();
-            return encoder.encode(data);
+            String encode = encoder.encode(data);
+            Map<String, String> map = new HashMap<>();
+            map.put("encode", encode);
+            map.put("url", contents);
+            map.put("extractionCode", save.getExtractionCode());
+            return map;
         } catch (Exception e) {
             throw new BusinessException(e.getMessage());
         }
+    }
+
+    @Override
+    public ShareRecord showSharedFile(Integer id, String extractionCode) {
+        if (id == null) {
+            return null;
+        }
+        ShareRecord record;
+        try{
+            record = sharedFileDao.findByIdAndExtractionCode(id, extractionCode);
+        }catch (Exception e){
+            throw new BusinessException("当前文件已超过有效期, 即将跳转至首页");
+        }
+        Integer validPeriod = record.getValidPeriod();
+        if (validPeriod != 0) {
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+            Date currentTime = null;//现在系统当前时间
+            try {
+                currentTime = dateFormat.parse(dateFormat.format(new Date()));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            long diff = System.currentTimeMillis() - record.getCreatedDate().getTime();
+            double days = diff * 1.0 / (1000 * 60 * 60 * 24) ;
+            if (days > validPeriod) {
+                //已超过有效期
+                sharedFileDao.mydeleteById(id);
+                throw new BusinessException("当前文件已超过有效期, 即将跳转至首页");
+            }
+            //获取剩余时间
+            record.setRemainTime(validPeriod-(int) days);
+        } else {
+            record.setRemainTime(999999);
+        }
+        MyFile file = fileDao.findById(record.getFileId()).get();
+        MyUser user = userService.getUserById(record.getUserId().toString());
+        UserAvater avater = userAvaterDao.findByUserId(user.getId());
+        if (avater == null) {
+            if (user.getSex() == null) {
+                //未选择性别，默认男头像
+                avater = userAvaterDao.findByUserId(0);
+            }else {
+                avater = userAvaterDao.findByUserId(user.getSex() == 0 ? 0 : -1);
+            }
+        }
+        record.setAvater(avater);
+        record.setFile(file);
+        record.setUser(user);
+        return record;
+
     }
 }

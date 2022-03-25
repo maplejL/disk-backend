@@ -16,6 +16,15 @@ public interface FileDao extends JpaRepository<MyFile, Integer> {
             "and type_code = :typeCode and is_delete=0 limit :start,:size", nativeQuery = true)
     ArrayList<MyFile> findByPage(int start, int size, int typeCode, int userId);
 
+    //获取分享的常见时间使用
+//    @Query(value = "select mf.url,mf.size,mf.file_name,mf.type_code,mf.thumbnail_name," +
+//            "mf.type_name,mf.user_id,mf.id, sr.created_date, mf.created_by, mf.modified_by, mf.modified_date, mf.is_delete from my_file mf " +
+//            "join share_record sr " +
+//            "on sr.shared_ids like CONCAT('%', :userId, '%') " +
+//            "where sr.file_id=mf.id " +
+//            "and type_code = :typeCode and sr.is_delete=0 limit :start,:size", nativeQuery = true)
+//    ArrayList<MyFile> findSharedFilesByPage(int start, int size, int typeCode, int userId);
+
     @Query(value = "select mf.* from my_file mf " +
             "join share_record sr " +
             "on sr.shared_ids like CONCAT('%', :userId, '%') " +

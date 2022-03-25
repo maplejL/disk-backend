@@ -1,6 +1,5 @@
 package com.cslg.disk.example.role.service;
 
-import com.cslg.disk.example.right.entity.Right;
 import com.cslg.disk.example.role.dto.RoleDto;
 import com.cslg.disk.example.role.entity.Role;
 

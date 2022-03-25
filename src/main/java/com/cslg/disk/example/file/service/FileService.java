@@ -2,6 +2,7 @@ package com.cslg.disk.example.file.service;
 
 import com.cslg.disk.example.file.dto.SearchPageDto;
 import com.cslg.disk.example.file.entity.MyFile;
+import com.cslg.disk.example.file.entity.ShareRecord;
 import com.cslg.disk.example.user.entity.UserAvater;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,5 +44,7 @@ public interface FileService {
 
     Object shareFile(Integer fileId, List<Integer> userIds, HttpServletRequest request);
 
-    Object generatorQrCode(String fileId);
+    Object generatorQrCode(String fileId, Integer validPeriod, HttpServletRequest request);
+
+    ShareRecord showSharedFile(Integer id, String extractionCode);
 }

@@ -72,8 +72,10 @@ public class FileController {
     @GetMapping("/download")
 //    @UserLoginToken
     public ResponseMessage downloadFile(@RequestParam(value = "id") String id,
-                                        HttpServletResponse response) throws IOException {
-        return ResponseMessage.success(fileService.downloadFile(id,"E:\\毕设\\disk-code-backend\\src\\main\\resources\\static", response));
+                                        HttpServletResponse response, HttpServletRequest request) throws IOException {
+        return ResponseMessage.success(
+                fileService.downloadFile(id,"E:\\毕设\\disk-code-backend\\src\\main\\resources\\static", response, request)
+        );
     }
 
     @DeleteMapping("/deleteFile")
@@ -140,8 +142,16 @@ public class FileController {
 
     @GetMapping("/generateQRCode")
     @UserLoginToken
-    public ResponseMessage generateQRCode(@RequestParam("fileId") String fileId) {
-        return ResponseMessage.success(fileService.generatorQrCode(fileId));
+    public ResponseMessage generateQRCode(@RequestParam("fileId") String fileId,
+                                          @RequestParam("valid")Integer valid,
+                                          HttpServletRequest request) {
+        return ResponseMessage.success(fileService.generatorQrCode(fileId, valid, request));
+    }
+
+    @GetMapping("showSharedFile")
+    public ResponseMessage showSharedFile(@RequestParam("id") Integer id,
+                                          @RequestParam("extractionCode") String extractionCode) {
+        return ResponseMessage.success(fileService.showSharedFile(id, extractionCode));
     }
 
 //    @PostMapping("/search")
