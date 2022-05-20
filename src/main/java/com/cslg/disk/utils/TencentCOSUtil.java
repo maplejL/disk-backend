@@ -66,6 +66,22 @@ public class TencentCOSUtil {
         System.out.println(transfer.getState());
     }
 
+    //存储桶中彻底删除文件
+    public static void delete(String key) {
+        new Thread(new Runnable() {
+            public void run() {
+                // 指定要删除的 bucket 和路径
+                try {
+                    cosClient.deleteObject(bucketName, key);
+                    System.out.println("删除成功");
+                } catch (Throwable tb) {
+                    System.out.println("删除文件失败");
+                    tb.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
     public static String uploadfile(MultipartFile file) {
 
         String fileName = file.getOriginalFilename();

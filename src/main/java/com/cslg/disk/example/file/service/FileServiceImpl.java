@@ -1,7 +1,5 @@
 package com.cslg.disk.example.file.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cslg.disk.common.exception.BusinessException;
 import com.cslg.disk.example.file.dao.SharedFileDao;
 import com.cslg.disk.example.file.dao.ThumbnailDao;
@@ -27,12 +25,10 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import sun.misc.BASE64Encoder;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
@@ -44,9 +40,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,16 +70,26 @@ public class FileServiceImpl implements FileService  {
 
     private static Map<Integer, String> typeAndName = new HashMap<>();
 
+    private static List<String> previewTypes = new ArrayList<>();
+
     static {
         List<String> type1 = new ArrayList<>();
         List<String> type2 = new ArrayList<>();
         List<String> type3 = new ArrayList<>();
         List<String> type4 = new ArrayList<>();
+        previewTypes.add("xlsx");
+        previewTypes.add("xls");
+        previewTypes.add("doc");
+        previewTypes.add("docx");
         type1.add("mp4");
         type4.add("jpg");
         type4.add("png");
         type4.add("jpeg");
         type2.add("xlsx");
+        type2.add("xls");
+        type2.add("doc");
+        type2.add("txt");
+        type2.add("docx");
         type3.add("mp3");
         typeAndCode.put(1, type1);
         typeAndCode.put(2, type2);
@@ -135,13 +138,35 @@ public class FileServiceImpl implements FileService  {
         int typeCode = searchPageDto.getTypeCode();
         int pageNo = searchPageDto.getPageNo();
         String input = searchPageDto.getInput();
+        Integer currentUserId = UserServiceImpl.getUserId(request);
         int start = pageNo * pageSize;
         List<MyFile> myFileList = new ArrayList<>();
         Integer userId = UserServiceImpl.getUserId(request);
+        //获取所有的文件信息
         if (input == null) {
             myFileList = fileDao.findSharedFilesByPage(start, pageSize, typeCode, userId);
         } else {
             myFileList = fileDao.findSharedFilesByPageWithInput(start, pageSize, typeCode, input, userId);
+        }
+        //获取分享记录
+        for (MyFile myFile : myFileList) {
+            Integer id = myFile.getId();
+            List<ShareRecord> list = sharedFileDao.findByUserIdAndFileId(userId, id);
+            List<MyUser> users = new ArrayList<>();
+            //为该文件设置分享者（文件拥有者）,被分享者
+            for (ShareRecord shareRecord : list) {
+                if (shareRecord.getUserId() != currentUserId) {
+                    //当前用户为被分享者
+                    users.add(userService.getUserById(String.valueOf(myFile.getUserId())));
+                } else {
+                    //当前用户为分享者
+                    String[] split = shareRecord.getSharedIds().split(",");
+                    for (String s : split) {
+                        users.add(userService.getUserById(s));
+                    }
+                }
+            }
+            myFile.setSharedUsers(users);
         }
         if (typeCode == 1) {
             myFileList.forEach(item -> {
@@ -161,8 +186,10 @@ public class FileServiceImpl implements FileService  {
     }
 
     @Override
-    public List<MyFile> getFile() {
-        return fileDao.findAll();
+    public List<MyFile> getFile(HttpServletRequest request) {
+        return fileDao.findAll().stream()
+                .filter(e -> e.getUserId() == UserServiceImpl.getUserId(request) && e.getIsDelete() == 0)
+                .collect(Collectors.toList());
     }
 
     public MyFile uploadFile(MultipartFile file, int typeCode, String targetFilePath, HttpServletRequest request) {
@@ -189,8 +216,6 @@ public class FileServiceImpl implements FileService  {
         uploadMyFile.setTypeName(type);
         uploadMyFile.setUserId(userId);
         String contentType = file.getContentType();
-        String[] split = contentType.split("/");
-//        uploadMyFile.setTypeName(split[1]);
 
         if (typeCode == 1) {
             ImageUtil imageUtil = new ImageUtil();
@@ -206,10 +231,6 @@ public class FileServiceImpl implements FileService  {
                 e.printStackTrace();
             }
         }
-//        Picture uploadPicture = new Picture();
-//        uploadPicture.setUrl(uploadFilePath);
-//        uploadPicture.setSize(fileSize);
-//        uploadPicture.setFileName(file.getOriginalFilename());
         return fileDao.save(uploadMyFile);
     }
 
@@ -260,6 +281,37 @@ public class FileServiceImpl implements FileService  {
         if (one == null) {
             return false;
         }
+        ShareRecord record = sharedFileDao.findByFileId(one.getId());
+//        if (record != null && record.getUserId() == currentUserId) {
+//            //当前文件已被分享过
+//            String[] split = record.getSharedIds().split(",");
+//            List<MyUser> list = new ArrayList<>();
+//            for (String s : split) {
+//                if (userIds.contains(Integer.valueOf(s))) {
+//                    //该文件已被分享给该用户
+//                    list.add(userService.getUserById(s));
+//                }
+//            }
+//            if (list.size() > 0) {
+//                StringBuilder builder = new StringBuilder();
+//                for (MyUser myUser : list) {
+//                    builder.append(myUser.getUsername()).append(" ");
+//                }
+//                throw new BusinessException("以下用户已被共享此文件: ["+builder+"]");
+//            }
+//            users.append(record.getSharedIds());
+//        }
+        if (record != null && record.getUserId() == currentUserId) {
+            String sharedIds = record.getSharedIds();
+            String[] split = sharedIds.split(",");
+            for (int i = 0; i < split.length; i++) {
+                if (!userIds.contains(split[i])) {
+                    userIds.add(Integer.valueOf(split[i]));
+                }
+            }
+            //当前文件已被分享过,删除原记录重新生成
+            sharedFileDao.deleteById(record.getId());
+        }
         for (Integer userId : userIds) {
             users.append(userId.toString()).append(",");
         }
@@ -303,9 +355,10 @@ public class FileServiceImpl implements FileService  {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         String filename = one.getFileName();
         savePath = savePath+"\\"+filename;
-        Integer threadSize = 100;
-        CountDownLatch latch = new CountDownLatch(threadSize);
-        MutiThreadDownLoad mutiThreadDownLoad = new MutiThreadDownLoad(threadSize,urlStr,savePath,latch);
+        Double fileSize = Double.valueOf(one.getSize().substring(0, one.getSize().length() - 2));
+        Double threadSize = fileSize/5;
+        CountDownLatch latch = new CountDownLatch(threadSize.intValue());
+        MutiThreadDownLoad mutiThreadDownLoad = new MutiThreadDownLoad(threadSize.intValue(),urlStr,savePath,latch);
         long startTime = System.currentTimeMillis();
         try {
             response = mutiThreadDownLoad.executeDownLoad(response, request);
@@ -318,16 +371,18 @@ public class FileServiceImpl implements FileService  {
         Map<String, Object> map = new HashMap<>();
         map.put("time", (endTime - startTime) / 1000);
         map.put("path", savePath);
-//        OutputStream outputStream = res.getOutputStream();
-//        res.setHeader("Content-Disposition", "attachment; filename=" + path);
-//        res.setCharacterEncoding("utf-8");
-//        res.setContentType("application/vnd.ms-excel");
-//        res.setHeader("Connection", "close");
         return map;
     }
 
     @Override
     public Object deleteFile(List<Integer> ids) {
+        for (Integer id : ids) {
+            ShareRecord share = sharedFileDao.findByFileId(id);
+            if (share != null) {
+                //存在共享记录
+                throw new BusinessException("该文件已被共享,删除需要先取消共享!");
+            }
+        }
         fileDao.batchDelete(ids);
         return null;
     }
@@ -373,11 +428,22 @@ public class FileServiceImpl implements FileService  {
 
     @Override
     public Boolean completelyDelete(List<Integer> ids) {
+        List<MyFile> files = fileDao.findByIds(ids);
+        List<String> urls = files.stream().map(MyFile::getUrl).collect(Collectors.toList());
+        for (String url : urls) {
+            String key = url.substring(url.indexOf("mall/"), url.length());
+            TencentCOSUtil.delete(key);
+        }
         return fileDao.completelyDelete(ids) > 0;
     }
 
     @Override
     public void previewFile(String url) {
+        int i = url.lastIndexOf(".");
+        String prefix = url.substring(i+1, url.length());
+        if (!previewTypes.contains(prefix)) {
+            throw new BusinessException("该文件类型不支持预览!");
+        }
         try {
             fileUtil.browse(url);
         } catch (Exception e) {
@@ -402,6 +468,30 @@ public class FileServiceImpl implements FileService  {
     }
 
     /**
+     *创建文件、文件夹{调用makeDir（） 递归方法}
+     *file.exists() 返回  true  文件、文件夹存在
+     *file.exists() 返回 false 文件、文件夹不存在
+     *@ throws IOException
+     */
+    public static boolean createFile(File file) throws IOException {
+        if(!file.exists()){
+            makeDir(file.getParentFile());
+        }
+        return file.createNewFile();
+    }
+    /**
+     * 递归方法
+     * makeDir（） 采用递归方法对文件、文件夹进行遍历创建新文件、新文件夹
+     * @param dir
+     */
+    public static void makeDir(File dir) {
+        if(!dir.getParentFile().exists()) {
+            makeDir(dir.getParentFile());
+        }
+        dir.mkdir();
+    }
+
+    /**
      * 生成不带白边的二维码
      *
      * @throws Exception 异常
@@ -410,7 +500,14 @@ public class FileServiceImpl implements FileService  {
     public Object generatorQrCode(String fileId,Integer validPeriod, HttpServletRequest request) {
         MyFile file = fileDao.getOne(Integer.valueOf(fileId));
         int typeCode = file.getTypeCode();
-        String QRCodePath = "C:\\Users\\user\\Pictures\\qrcode.png";
+        String QRCodePath = "D:\\disk\\qrcode.png";
+        File file1 = new File(QRCodePath);
+        try {
+            //若文件夹不存在则创建文件夹
+            createFile(file1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         //定义二维码的内容参数
         Map<EncodeHintType,Object> hints=new HashMap<EncodeHintType, Object>();
         //设置边框距
@@ -450,6 +547,7 @@ public class FileServiceImpl implements FileService  {
             map.put("encode", encode);
             map.put("url", contents);
             map.put("extractionCode", save.getExtractionCode());
+            map.put("path", QRCodePath);
             return map;
         } catch (Exception e) {
             throw new BusinessException(e.getMessage());
@@ -504,5 +602,48 @@ public class FileServiceImpl implements FileService  {
         record.setUser(user);
         return record;
 
+    }
+
+    @Override
+    public Object cancelShare(Integer id, HttpServletRequest request) {
+        ShareRecord shareRecord = sharedFileDao.findByFileId(id);
+        if (shareRecord == null) {
+            return false;
+        }
+        return sharedFileDao.mydeleteById(shareRecord.getId()) > 0;
+    }
+
+    @Override
+    public ShareRecord getByFileId(Integer fileId) {
+        ShareRecord byFileId = sharedFileDao.findByFileId(fileId);
+        return byFileId;
+    }
+
+    @Override
+    public Map<String, Object> getLinkRecord(Integer id, Integer pageNo, Integer pageSize) {
+        pageNo = 0;
+        pageSize = 10000;
+        int start = pageNo * pageSize;
+//        limit :start,:size
+        //通过用户id获取链接记录
+        List<ShareRecord> records = sharedFileDao.findByUserId(id, start, 10000);
+        List<Integer> fileIds = records.stream().map(e -> e.getFileId()).collect(Collectors.toList());
+        List<MyFile> files = fileDao.findByIds(fileIds);
+        for (ShareRecord record : records) {
+            Map<Integer, MyFile> collect = files.stream().collect(Collectors.toMap(MyFile::getId, MyFile -> MyFile));
+            String content = "http://localhost:8080/#/share?typeCode="+collect.get(record.getFileId()).getTypeCode()+"&id="+record.getId();
+            record.setLinkContent(content);
+            record.setFile(collect.get(record.getFileId()));
+        }
+        Map<String, Object> map = new HashMap<>();
+        map.put("records", records);
+        map.put("total", sharedFileDao.findAll().stream().filter(e -> e.getIsDelete() == 0 && e.getUserId() == id).count());
+        return map;
+    }
+
+    @Override
+    public Object deleteRecord(Integer id, HttpServletRequest request) {
+        sharedFileDao.deleteById(id);
+        return true;
     }
 }

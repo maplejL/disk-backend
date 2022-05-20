@@ -3,6 +3,7 @@ package com.cslg.disk.example.user.controller;
 import com.cslg.disk.common.exception.BusinessException;
 import com.cslg.disk.common.exception.GlobalExceptionHandler;
 import com.cslg.disk.common.ResponseMessage;
+import com.cslg.disk.example.user.service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.cslg.disk.example.user.anno.UserLoginToken;
 import com.cslg.disk.example.user.dto.LoginDto;
@@ -36,7 +37,7 @@ public class UserController extends GlobalExceptionHandler {
 
     public static Set<String> lockedHost = new ConcurrentSkipListSet<>();
 
-    //默认登录失败次数为3
+    //默认登录失败次数为5
     public static Integer limitLoginTime = 5;
 
     static {
@@ -106,14 +107,52 @@ public class UserController extends GlobalExceptionHandler {
 
     @GetMapping("/getFriends")
     @UserLoginToken
-    public ResponseMessage getFriends(@RequestParam(value = "id")Integer id) {
-        return ResponseMessage.success(userService.getFriends(id));
+    public ResponseMessage getFriends(@RequestParam(value = "id")Integer id, @RequestParam(value = "fileId") Integer fileId) {
+        return ResponseMessage.success(userService.getFriends(id,fileId));
     }
 
     @PostMapping("/refactor")
     @UserLoginToken
     public ResponseMessage refactor(@RequestBody MyUser user) {
         return ResponseMessage.success(userService.refactor(user));
+    }
+
+    @GetMapping("/addFriend")
+    @UserLoginToken
+    public ResponseMessage getFriends(@RequestParam("name")String name, HttpServletRequest request) {
+        return ResponseMessage.success(userService.addFriend(name, request));
+    }
+
+    @GetMapping("/deleteFriend")
+    @UserLoginToken
+    public ResponseMessage deleteFriend(@RequestParam("name")String name, HttpServletRequest request) {
+        userService.deleteFriend(name, request);
+        return ResponseMessage.success();
+    }
+
+    @GetMapping("getUser")
+    @UserLoginToken
+    public ResponseMessage getUserByName(@RequestParam("name")String name, HttpServletRequest request) {
+        return ResponseMessage.success(userService.getUserByName(name, request));
+    }
+
+    @GetMapping("/deleteFriendById")
+    @UserLoginToken
+    public ResponseMessage deleteFriendById(@RequestParam("id") Integer userid, HttpServletRequest request) {
+        MyUser user = userService.getUserById(String.valueOf(userid));
+        return ResponseMessage.success(userService.deleteFriend(user.getUsername(), request));
+    }
+
+    @GetMapping("/getFriendApply")
+    @UserLoginToken
+    public ResponseMessage getFriendApply(HttpServletRequest request) {
+        return ResponseMessage.success(userService.getFriendApply(String.valueOf(UserServiceImpl.getUserId(request))));
+    }
+
+    @GetMapping("/doFriendApply")
+    @UserLoginToken
+    public ResponseMessage doFriendApply(@RequestParam("id") String id, @RequestParam("apply") boolean apply) {
+        return ResponseMessage.success(userService.doFriendApply(id, apply));
     }
 
 }

@@ -1,11 +1,10 @@
 package com.cslg.disk.example.user.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cslg.disk.example.user.dto.LoginDto;
 import com.cslg.disk.example.user.dto.RegisterDto;
 import com.cslg.disk.example.user.dto.UpdatePwdDto;
 import com.cslg.disk.example.user.entity.MyUser;
+import com.cslg.disk.example.user.entity.UserRelation;
 import com.cslg.disk.example.user.util.RSAUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,7 +20,7 @@ public interface UserService {
 
     Object updatePwd(UpdatePwdDto updatePwdDto);
 
-    List<MyUser> getFriends(Integer id);
+    Map<String, List<MyUser>> getFriends(Integer id, Integer fileId);
 
     String testLogin(LoginDto loginDto);
 
@@ -36,4 +35,16 @@ public interface UserService {
     MyUser addUsers(RegisterDto registerDto);
 
     Object deleteUser(List<String> ids);
+
+    Object addFriend(String username, HttpServletRequest request);
+
+    List<UserRelation> getFriendApply(String id);
+
+    boolean doFriendApply(String id,boolean isBuild);
+
+    MyUser getUserByName(String name, HttpServletRequest request);
+
+    boolean deleteFriend(String name, HttpServletRequest request);
+
+    Map<String, Object> getOnlineUsers();
 }

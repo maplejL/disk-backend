@@ -21,5 +21,7 @@ public interface RedisService {
     void setToken(MyUser user, String token);
 
     void deleteValue(String key);
+
+    List<String> getOnlineUsers();
 }
 

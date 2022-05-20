@@ -27,8 +27,8 @@ public interface FileDao extends JpaRepository<MyFile, Integer> {
 
     @Query(value = "select mf.* from my_file mf " +
             "join share_record sr " +
-            "on sr.shared_ids like CONCAT('%', :userId, '%') " +
-            "where sr.file_id=mf.id " +
+            "on sr.shared_ids like CONCAT('%', :userId, '%') or sr.user_id=:userId " +
+            "where sr.shared_ids is not null and sr.file_id=mf.id " +
             "and type_code = :typeCode and sr.is_delete=0 limit :start,:size", nativeQuery = true)
     ArrayList<MyFile> findSharedFilesByPage(int start, int size, int typeCode, int userId);
 
@@ -81,4 +81,8 @@ public interface FileDao extends JpaRepository<MyFile, Integer> {
             "where sr.file_id=mf.id and mf.file_name like CONCAT('%', :input, '%')" +
             "and type_code = :typeCode and sr.is_delete=0 limit :start,:pageSize")
     List<MyFile> findSharedFilesByPageWithInput(int start, int pageSize, int typeCode, String input, Integer userId);
+
+    @Query(value = "select * from my_file where id in :ids", nativeQuery = true)
+    List<MyFile> findByIds(List<Integer> ids);
+
 }

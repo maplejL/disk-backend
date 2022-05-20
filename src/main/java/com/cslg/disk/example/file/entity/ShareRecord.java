@@ -34,4 +34,7 @@ public class ShareRecord extends BaseEntity {
 
     @Transient
     private UserAvater avater;
+
+    @Transient
+    private String linkContent;
 }

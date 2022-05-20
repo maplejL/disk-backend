@@ -12,6 +12,7 @@ import com.cslg.disk.example.socket.WebSocket;
 import com.cslg.disk.example.user.dao.UserAvaterDao;
 import com.cslg.disk.example.user.entity.UserAvater;
 import com.cslg.disk.example.user.service.UserService;
+import com.cslg.disk.example.user.service.UserServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -87,7 +88,9 @@ public class ChatRecordServiceImpl implements ChatRecordService {
                 onLineUserIds.add(id);
             }
         }
-        offLineUserIds.delete(offLineUserIds.length()-1, offLineUserIds.length());
+        if (offLineUserIds.length() > 0) {
+            offLineUserIds.delete(offLineUserIds.length()-1, offLineUserIds.length());
+        }
         if (offLineUserIds.length() > 0) {
             TempChat tempChat = new TempChat();
             tempChat.setContent(chatDto.getContent());
@@ -108,6 +111,8 @@ public class ChatRecordServiceImpl implements ChatRecordService {
         List<ChatRecord> list = new ArrayList<>();
         list.add(chatRecord);
         map.put("newChatRecord", list);
+        //去除发送人
+        onLineUserIds.remove(chatDto.getUserId());
         for (String onLineUserId : onLineUserIds) {
             socket.sendOneObject(onLineUserId, map);
         }

@@ -40,8 +40,8 @@ public class FileController {
     //获取全部文件
     @GetMapping("/getAll")
     @UserLoginToken
-    public Iterable<MyFile> getFile() {
-        return fileService.getFile();
+    public ResponseMessage getFile(HttpServletRequest request) {
+        return ResponseMessage.success(fileService.getFile(request));
     }
 
     //获取全部文件
@@ -74,7 +74,7 @@ public class FileController {
     public ResponseMessage downloadFile(@RequestParam(value = "id") String id,
                                         HttpServletResponse response, HttpServletRequest request) throws IOException {
         return ResponseMessage.success(
-                fileService.downloadFile(id,"E:\\毕设\\disk-code-backend\\src\\main\\resources\\static", response, request)
+                fileService.downloadFile(id,"D:\\disk", response, request)
         );
     }
 
@@ -129,6 +129,26 @@ public class FileController {
     }
 
     /**
+     * 分享多个文件
+     * @param fileIds
+     * @param userIds
+     * @param request
+     * @return
+     */
+    @GetMapping("/shareFiles")
+    @UserLoginToken
+    public ResponseMessage shareFiles(@RequestParam("fileIds")String fileIds,
+                                     @RequestParam("userIds")String userIds,
+                                     HttpServletRequest request) {
+        List<Integer> ids = JSON.parseArray(userIds, Integer.class);
+        List<Integer> fileids = JSON.parseArray(fileIds, Integer.class);
+        for (Integer fileId : fileids) {
+            fileService.shareFile(fileId, ids, request);
+        }
+        return ResponseMessage.success();
+    }
+
+    /**
      * 分页获取其他用户共享的文件
      * @param searchPageDto
      * @param request
@@ -148,10 +168,27 @@ public class FileController {
         return ResponseMessage.success(fileService.generatorQrCode(fileId, valid, request));
     }
 
-    @GetMapping("showSharedFile")
+    @GetMapping("/showSharedFile")
     public ResponseMessage showSharedFile(@RequestParam("id") Integer id,
                                           @RequestParam("extractionCode") String extractionCode) {
         return ResponseMessage.success(fileService.showSharedFile(id, extractionCode));
+    }
+
+    @GetMapping("/getLinkRecord")
+    public ResponseMessage getLinkRecord(@RequestParam("id") Integer id,
+                                         @RequestParam(value = "pageNo", required = false) Integer pageNo,
+                                         @RequestParam(value = "pageSize", required = false) Integer pageSize) {
+        return ResponseMessage.success(fileService.getLinkRecord(id, pageNo, pageSize));
+    }
+
+    @GetMapping("/cancelShare")
+    public ResponseMessage cancelShare(@RequestParam("id") Integer id, HttpServletRequest request) {
+        return ResponseMessage.success(fileService.cancelShare(id, request));
+    }
+
+    @GetMapping("/deleteRecord")
+    public ResponseMessage deleteRecord(@RequestParam("id") Integer id, HttpServletRequest request) {
+        return ResponseMessage.success(fileService.deleteRecord(id, request));
     }
 
 //    @PostMapping("/search")

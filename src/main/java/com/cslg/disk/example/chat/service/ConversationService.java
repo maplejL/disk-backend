@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * (Conversation)表服务接口
  *
@@ -18,7 +20,7 @@ public interface ConversationService {
 
     Page<Conversation> queryAllByLimit(int offset, int limit);
 
-    Conversation insert(ConversationDto conversationDto);
+    Conversation insert(ConversationDto conversationDto, HttpServletRequest request);
 
     Conversation update(Conversation conversation);
 

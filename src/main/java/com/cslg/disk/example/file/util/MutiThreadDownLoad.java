@@ -132,19 +132,19 @@ public class MutiThreadDownLoad {
 
                 int len = 0;
                 byte[] buffer = new byte[1024];
-                OutputStream outputStream = response.getOutputStream();
-                String mineType = request.getServletContext().getMimeType(URLEncoder.encode("test", "UTF-8"));
-                response.setCharacterEncoding("utf-8");
-                response.setContentType(mineType);
-                response.setHeader("Content-Disposition", "attachment; filename=1");
-                response.setHeader("Connection", "close");
+//                OutputStream outputStream = response.getOutputStream();
+//                String mineType = request.getServletContext().getMimeType(URLEncoder.encode("test", "UTF-8"));
+//                response.setCharacterEncoding("utf-8");
+//                response.setContentType(mineType);
+//                response.setHeader("Content-Disposition", "attachment; filename=1");
+//                response.setHeader("Connection", "close");
                 while ((len = is.read(buffer)) != -1) {
                     raf.write(buffer, 0, len);
-                    outputStream.write(buffer, 0, len);
+//                    outputStream.write(buffer, 0, len);
                 }
                 is.close();
                 raf.close();
-                outputStream.close();
+//                outputStream.close();
                 System.out.println("线程" + threadId + "下载完毕");
                 //计数值减一
                 latch.countDown();

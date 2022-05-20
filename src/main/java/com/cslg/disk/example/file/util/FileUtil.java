@@ -48,13 +48,10 @@ public class FileUtil {
         url = "https://view.officeapps.live.com/op/view.aspx?src=" + url;
         //获取操作系统的名字
         String osName = System.getProperty("os.name", "");
-
         if (osName.startsWith("Mac OS")) {
             //苹果的打开方式
             Class fileMgr = Class.forName("com.apple.eio.FileManager");
-
             Method openURL = fileMgr.getDeclaredMethod("openURL", new Class[]{String.class});
-
             openURL.invoke(null, new Object[]{url});
         } else if (osName.startsWith("Windows")) {
             //windows的打开方式。
@@ -73,7 +70,6 @@ public class FileUtil {
             else
                 //这个值在上面已经成功的得到了一个进程。
                 Runtime.getRuntime().exec(new String[]{browser, url});
-
         }
     }
 }

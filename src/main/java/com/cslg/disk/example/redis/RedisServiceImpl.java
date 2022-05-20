@@ -5,8 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.*;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -62,6 +64,17 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public void deleteValue(String key) {
         redisTemplate.delete(key);
+    }
+
+    @Override
+    public List<String> getOnlineUsers() {
+        List<String> values = new ArrayList<>();
+        Set<String> keys = redisTemplate.keys("user:*");
+        if (null != keys){
+            // 批量获取数据
+            values = redisTemplate.opsForValue().multiGet(keys);
+        }
+        return values;
     }
 
 }

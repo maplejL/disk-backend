@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * (Conversation)表控制层
@@ -39,14 +40,20 @@ public class ConversationController {
 
     @PostMapping("/addConversation")
     @UserLoginToken
-    public ResponseMessage addConversation(@RequestBody ConversationDto conversationDto) {
-        return ResponseMessage.success(conversationService.insert(conversationDto));
+    public ResponseMessage addConversation(@RequestBody ConversationDto conversationDto, HttpServletRequest request) {
+        return ResponseMessage.success(conversationService.insert(conversationDto, request));
     }
 
     @GetMapping("/conversations")
     @UserLoginToken
     public ResponseMessage getAllConversations(@RequestParam("id")Integer id) {
         return ResponseMessage.success(conversationService.getallById(id));
+    }
+
+    @GetMapping("/deleteConversation")
+    @UserLoginToken
+    public ResponseMessage deleteConversation(@RequestParam("id")Integer id) {
+        return ResponseMessage.success(conversationService.deleteById(id));
     }
 }
 

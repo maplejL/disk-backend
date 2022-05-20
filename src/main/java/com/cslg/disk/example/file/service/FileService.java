@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface FileService {
-    public List<MyFile> getFile();
+    public List<MyFile> getFile(HttpServletRequest request);
 
     public Map<String, Object> getFile(SearchPageDto searchPageDto, HttpServletRequest request);
 
@@ -47,4 +47,12 @@ public interface FileService {
     Object generatorQrCode(String fileId, Integer validPeriod, HttpServletRequest request);
 
     ShareRecord showSharedFile(Integer id, String extractionCode);
+
+    Object cancelShare(Integer id, HttpServletRequest request);
+
+    ShareRecord getByFileId(Integer fileId);
+
+    Map<String, Object> getLinkRecord(Integer id, Integer pageNo, Integer pageSize);
+
+    Object deleteRecord(Integer id, HttpServletRequest request);
 }
